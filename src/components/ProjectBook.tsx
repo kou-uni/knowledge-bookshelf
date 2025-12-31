@@ -9,20 +9,45 @@ export function ProjectBook({ project, index, hue, total }: { project: Project, 
     const [isHovered, setIsHovered] = useState(false);
     const [_, startTransition] = useTransition();
 
-    const handleDelete = (e: React.MouseEvent) => {
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleDeleteClick = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
+        setShowConfirm(true);
+    };
 
-        if (confirm('Delete this project?')) {
+    const handleConfirm = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setShowConfirm(false);
+        setIsDeleting(true);
+
+        // Play vanish animation before actual deletion
+        setTimeout(() => {
             startTransition(async () => {
                 await deleteProjectAction(project.id);
             });
-        }
+        }, 600);
+    };
+
+    const handleCancel = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setShowConfirm(false);
     };
 
     return (
         <div
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+            className={isDeleting ? 'book-vanishing' : 'book-appearing'}
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                position: 'relative',
+                zIndex: isHovered || showConfirm ? 100 : 1 // Lift active book above others
+            }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
@@ -44,8 +69,8 @@ export function ProjectBook({ project, index, hue, total }: { project: Project, 
                     <div className="spine-header"></div>
                     <div className="spine-title">{project.title}</div>
                     <div className="spine-footer">
-                        {/* vol logic: total (N), index (0..N-1) -> want 1..N order. so i+1 is correct for LTR. */}
-                        <span className="vol-text">VOL.{index + 1}</span>
+                        {/* vol logic: total - index (Newest is last Vol, Oldest is Vol.1) */}
+                        <span className="vol-text">VOL.{total - index}</span>
                     </div>
                 </div>
             </Link>
@@ -58,12 +83,13 @@ export function ProjectBook({ project, index, hue, total }: { project: Project, 
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    opacity: isHovered ? 1 : 0,
+                    opacity: isHovered || showConfirm ? 1 : 0,
                     transition: 'opacity 0.2s',
                     cursor: 'pointer',
-                    marginTop: '4px' // Gap between book and table/shelf trigger
+                    marginTop: '4px',
+                    position: 'relative'
                 }}
-                onClick={handleDelete}
+                onClick={handleDeleteClick}
                 title="Delete Project"
             >
                 <span style={{
@@ -72,11 +98,70 @@ export function ProjectBook({ project, index, hue, total }: { project: Project, 
                     fontWeight: '300',
                     lineHeight: 1
                 }}>×</span>
+
+                {/* MEDIEVAL CONFIRMATION BUBBLE */}
+                {showConfirm && (
+                    <div className="medieval-bubble" onClick={(e) => e.stopPropagation()}>
+                        <div className="bubble-content">
+                            <p style={{ margin: '0 0 12px 0', fontFamily: 'serif', fontSize: '0.9rem', color: '#3e2723' }}>
+                                此の書を虚無へと<br />還すが良いか？
+                            </p>
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                <button onClick={handleConfirm} className="medieval-btn danger">然り</button>
+                                <button onClick={handleCancel} className="medieval-btn">否</button>
+                            </div>
+                        </div>
+                        <div className="bubble-arrow"></div>
+                    </div>
+                )}
             </div>
 
             <style jsx>{`
+                /* MAGIC ANIMATIONS */
+                @keyframes bookAppear {
+                    0% {
+                        opacity: 0;
+                        transform: translateY(20px) scale(0.9);
+                        filter: brightness(0);
+                    }
+                    50% {
+                        opacity: 1;
+                        filter: brightness(1.5); /* Magical flash */
+                    }
+                    100% {
+                        transform: translateY(0) scale(1);
+                        filter: brightness(1);
+                    }
+                }
+
+                @keyframes bookVanish {
+                    0% {
+                        transform: scale(1);
+                        opacity: 1;
+                        filter: brightness(1);
+                    }
+                    30% {
+                        transform: scale(1.1);
+                        filter: brightness(2) blur(2px); /* Flash before disappearing */
+                    }
+                    100% {
+                        transform: scale(0) translateY(-20px);
+                        opacity: 0;
+                        filter: brightness(0) blur(10px);
+                    }
+                }
+
+                .book-appearing {
+                    animation: bookAppear 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+                }
+
+                .book-vanishing {
+                    animation: bookVanish 0.6s ease-in forwards;
+                    pointer-events: none; /* Prevent clicks during exit */
+                }
+
                 .book-spine {
-                    width: 60px;
+                    width: 80px; /* Wider spine */
                     border-radius: 2px;
                     box-shadow: 
                         inset 4px 0 6px rgba(0,0,0,0.5),
@@ -110,8 +195,8 @@ export function ProjectBook({ project, index, hue, total }: { project: Project, 
                     writing-mode: vertical-rl;
                     text-orientation: mixed;
                     color: rgba(255,255,255,0.9);
-                    font-family: 'Times New Roman', serif;
-                    font-size: 1.1rem;
+                    font-family: 'Garamond', 'Didot', 'Times New Roman', serif; /* Ancient style */
+                    font-size: 0.95rem; /* Smaller font */
                     letter-spacing: 0.15em;
                     text-transform: uppercase;
                     /* Centering Logic */
@@ -122,10 +207,11 @@ export function ProjectBook({ project, index, hue, total }: { project: Project, 
                     right: 0;
                     display: flex;
                     align-items: center;
-                    justify-content: flex-start; /* Aligns text to top */
+                    justify-content: center; /* Changed from flex-start to center for better aesthetics */
                     padding: 0 10px;
                     text-align: center;
                     width: 100%;
+                    overflow: hidden; /* Ensure no spill */
                 }
 
                 .spine-footer {
@@ -144,6 +230,80 @@ export function ProjectBook({ project, index, hue, total }: { project: Project, 
                     font-size: 0.8rem;
                     color: rgba(198, 169, 105, 0.7);
                     letter-spacing: 0.05em;
+                }
+
+                /* MEDIEVAL POPUP STYLES */
+                @keyframes popIn {
+                    0% {
+                        opacity: 0;
+                        transform: translateX(-50%) scale(0.5) translateY(10px);
+                    }
+                    70% {
+                        transform: translateX(-50%) scale(1.1) translateY(-5px);
+                    }
+                    100% {
+                        opacity: 1;
+                        transform: translateX(-50%) scale(1) translateY(0);
+                    }
+                }
+
+                .medieval-bubble {
+                    position: absolute;
+                    bottom: 30px; /* Above the X */
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 160px;
+                    background: #f4e4bc; /* Parchment */
+                    border: 2px solid #5d4037;
+                    border-radius: 4px;
+                    padding: 12px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+                    z-index: 100;
+                    text-align: center;
+                    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+                    transform-origin: bottom center;
+                }
+
+                .medieval-bubble::before {
+                    content: '';
+                    position: absolute;
+                    top: 2px; left: 2px; right: 2px; bottom: 2px;
+                    border: 1px dashed #5d4037;
+                    pointer-events: none;
+                }
+
+                .bubble-arrow {
+                    position: absolute;
+                    bottom: -6px;
+                    left: 50%;
+                    transform: translateX(-50%) rotate(45deg);
+                    width: 10px;
+                    height: 10px;
+                    background: #f4e4bc;
+                    border-right: 2px solid #5d4037;
+                    border-bottom: 2px solid #5d4037;
+                }
+
+                .medieval-btn {
+                    background: transparent;
+                    border: 1px solid #5d4037;
+                    color: #3e2723;
+                    font-family: serif;
+                    font-size: 0.8rem;
+                    cursor: pointer;
+                    padding: 2px 8px;
+                    transition: all 0.2s;
+                }
+
+                .medieval-btn:hover {
+                    background: #5d4037;
+                    color: #fff;
+                }
+
+                .medieval-btn.danger:hover {
+                    background: #8b0000;
+                    border-color: #8b0000;
+                    color: #fff;
                 }
             `}</style>
         </div>

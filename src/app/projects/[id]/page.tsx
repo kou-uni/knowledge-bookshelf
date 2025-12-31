@@ -1,9 +1,10 @@
-import { getProject } from '@/lib/store';
-import { notFound } from 'next/navigation';
+import { ProjectService } from '@/lib/services/ProjectService';
 import { ProjectDetailClient } from '@/components/ProjectDetailClient';
+import { notFound } from 'next/navigation';
 
 export default async function ProjectDetailPage({ params }: { params: { id: string } }) {
-    const project = await getProject(params.id);
+    const projectService = new ProjectService();
+    const project = await projectService.getProject(params.id);
 
     if (!project) {
         notFound();

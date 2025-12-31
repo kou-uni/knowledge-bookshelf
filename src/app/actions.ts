@@ -1,14 +1,23 @@
 'use server';
 
-import { createProject, seedSampleData, addInputToSession, getSession, addOutputToSession, createSession, deleteSession } from '@/lib/store';
 import { revalidatePath } from 'next/cache';
-import { InputType } from '@/lib/types';
+import { ProjectService } from '@/lib/services/ProjectService';
+import { SessionService } from '@/lib/services/SessionService';
+import { TemplateService } from '@/lib/services/TemplateService';
+import { InputType, Project, Session } from '@/lib/types';
 import { summarizeSessionSkill } from '@/lib/skills/summarize';
 import { generatePPTSkill } from '@/lib/skills/ppt';
 import { analyzeSessionSkill } from '@/lib/skills/analyze';
 
+import { KnowledgeService } from '@/lib/services/KnowledgeService';
+
+const projectService = new ProjectService();
+const sessionService = new SessionService();
+const templateService = new TemplateService();
+const knowledgeService = new KnowledgeService();
+
 export async function initializeData() {
-    await seedSampleData();
+    await projectService.seedSampleData();
     revalidatePath('/');
 }
 
@@ -16,61 +25,76 @@ export async function createNewProject(formData: FormData) {
     const title = formData.get('title') as string;
     const type = formData.get('type') as any;
     if (!title) return;
-    await createProject(title, type || 'other');
+    await projectService.createProject(title, type || 'other');
     revalidatePath('/');
 }
 
+export async function updateProjectAction(id: string, data: Partial<Project>) {
+    await projectService.updateProject(id, data);
+    revalidatePath('/');
+    revalidatePath(`/projects/${id}`);
+}
+
 export async function deleteProjectAction(projectId: string) {
-    const { deleteProject } = await import('@/lib/store');
-    await deleteProject(projectId);
+    await projectService.deleteProject(projectId);
     revalidatePath('/');
 }
 
 // Session Management
 export async function createSessionAction(projectId: string) {
-    await createSession(projectId);
+    await sessionService.createSession(projectId);
     revalidatePath(`/projects/${projectId}`);
 }
 
 export async function deleteSessionAction(projectId: string, sessionId: string) {
-    await deleteSession(projectId, sessionId);
+    await sessionService.deleteSession(projectId, sessionId);
     revalidatePath(`/projects/${projectId}`);
 }
 
 export async function updateSessionDateAction(projectId: string, sessionId: string, date: string) {
-    // Dynamic import to avoid circular dep if needed, but here simple import work
-    const { updateSession } = await import('@/lib/store');
-    await updateSession(projectId, sessionId, { date });
+    await sessionService.updateSession(projectId, sessionId, { date });
     revalidatePath(`/projects/${projectId}`);
 }
 
+export async function updateSessionAction(projectId: string, sessionId: string, data: Partial<Session>) {
+    await sessionService.updateSession(projectId, sessionId, data);
+    revalidatePath(`/projects/${projectId}`);
+    revalidatePath(`/projects/${projectId}/sessions/${sessionId}`);
+}
+
 export async function addSessionInput(projectId: string, sessionId: string, formData: FormData) {
-    const title = formData.get('title') as string;
+    let title = formData.get('title') as string;
     const content = formData.get('content') as string;
-    const type = formData.get('type') as InputType || 'text';
+    let type = formData.get('type') as string;
+    const imageData = formData.get('imageData') as string;
+    const isAssignment = formData.get('isAssignment') === 'true'; // Checkbox value logic
 
-    if (!title || !content) return;
+    if (!title) {
+        title = `Untitled ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+    }
 
-    await addInputToSession(projectId, sessionId, type, title, content);
+    if (type === 'photo') type = 'image';
+
+    // Ensure we have content. If photo and no content provided (though frontend should provide it), fallback.
+    if (!content) return;
+
+    await sessionService.addInput(projectId, sessionId, type as InputType, title, content, imageData, isAssignment);
     revalidatePath(`/projects/${projectId}/sessions/${sessionId}`);
 }
 
 export async function deleteSessionInputAction(projectId: string, sessionId: string, inputId: string) {
-    const { deleteInputFromSession } = await import('@/lib/store');
-    await deleteInputFromSession(projectId, sessionId, inputId);
+    await sessionService.deleteInput(projectId, sessionId, inputId);
     revalidatePath(`/projects/${projectId}/sessions/${sessionId}`);
 }
 
 export async function runSessionSkill(projectId: string, sessionId: string, skillId: string) {
-    const data = await getSession(projectId, sessionId);
-    if (!data) return { error: 'Session not found' };
-
-    const { session } = data;
+    const session = await sessionService.getSession(projectId, sessionId);
+    if (!session) return { error: 'Session not found' };
 
     if (skillId === 'analyze') {
         try {
             const result = await analyzeSessionSkill({ session, inputs: session.inputs });
-            await addOutputToSession(projectId, sessionId, skillId, result.type, result.title, result.content);
+            await sessionService.addOutput(projectId, sessionId, skillId, result.type, result.title, result.content);
             revalidatePath(`/projects/${projectId}/sessions/${sessionId}`);
             return { success: true };
         } catch (e) {
@@ -82,7 +106,7 @@ export async function runSessionSkill(projectId: string, sessionId: string, skil
     if (skillId === 'summarize') {
         try {
             const result = await summarizeSessionSkill({ session, inputs: session.inputs });
-            await addOutputToSession(projectId, sessionId, skillId, result.type, result.title, result.content);
+            await sessionService.addOutput(projectId, sessionId, skillId, result.type, result.title, result.content);
             revalidatePath(`/projects/${projectId}/sessions/${sessionId}`);
             return { success: true };
         } catch (e) {
@@ -94,7 +118,7 @@ export async function runSessionSkill(projectId: string, sessionId: string, skil
     if (skillId === 'ppt') {
         try {
             const result = await generatePPTSkill({ session, inputs: session.inputs });
-            await addOutputToSession(projectId, sessionId, skillId, result.type, result.title, result.content);
+            await sessionService.addOutput(projectId, sessionId, skillId, result.type, result.title, result.content);
             revalidatePath(`/projects/${projectId}/sessions/${sessionId}`);
             return { success: true };
         } catch (e) {
@@ -113,13 +137,46 @@ export async function createTemplateAction(formData: FormData) {
 
     if (!title || !content) return;
 
-    const { addTemplate } = await import('@/lib/store');
-    await addTemplate(title, content);
+    await templateService.createTemplate(title, content);
     revalidatePath('/');
 }
 
 export async function deleteTemplateAction(id: string) {
-    const { deleteTemplate } = await import('@/lib/store');
-    await deleteTemplate(id);
+    await templateService.deleteTemplate(id);
     revalidatePath('/');
+}
+
+export async function runProjectSkill(projectId: string, skillId: string) {
+    const project = await projectService.getProject(projectId);
+    if (!project) return { error: 'Project not found' };
+
+    if (skillId === 'analyze') {
+        try {
+            // Aggregate all inputs
+            const allInputs = project.sessions.flatMap(s => s.inputs);
+
+            // Mock session context for the skill
+            const mockSession = { title: `Project Analysis: ${project.title}` } as any;
+
+            const result = await analyzeSessionSkill({ session: mockSession, inputs: allInputs });
+            await projectService.addOutput(projectId, skillId, result.type, result.title, result.content);
+            revalidatePath(`/projects/${projectId}`);
+            return { success: true };
+        } catch (e) {
+            console.error(e);
+            return { error: 'Failed to run project analysis' };
+        }
+    }
+    return { error: 'Unknown skill' };
+}
+
+export async function analyzeInputAction(projectId: string, sessionId: string, inputId: string) {
+    try {
+        const items = await knowledgeService.analyzeInput(projectId, sessionId, inputId);
+        revalidatePath(`/projects/${projectId}/sessions/${sessionId}`);
+        return { success: true, items };
+    } catch (e) {
+        console.error(e);
+        return { error: 'Failed to extract knowledge' };
+    }
 }

@@ -1,31 +1,25 @@
-import { getSession } from '@/lib/store';
 import { notFound } from 'next/navigation';
-import { SessionClient } from '@/components/SessionClient';
 import Link from 'next/link';
+import { SessionService } from '@/lib/services/SessionService';
+import { ProjectService } from '@/lib/services/ProjectService';
+import { SessionClient } from '@/components/SessionClient';
 
-export default async function SessionDetailPage({ params }: { params: { id: string; sessionId: string } }) {
-    const data = await getSession(params.id, params.sessionId);
+export default async function SessionPage({ params }: { params: { id: string; sessionId: string } }) {
+    const sessionService = new SessionService();
+    const projectService = new ProjectService();
 
-    if (!data) {
+    const session = await sessionService.getSession(params.id, params.sessionId);
+    const project = await projectService.getProject(params.id);
+
+    if (!session || !project) {
         notFound();
     }
 
-    const { project, session } = data;
+    const data = { project, session };
 
     return (
-        <main style={{ padding: '40px 0', height: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <header style={{ marginBottom: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: 'var(--accents-5)', fontSize: '0.9rem' }}>
-                    <Link href="/">Dashboard</Link>
-                    <span>/</span>
-                    <Link href={`/projects/${project.id}`}>{project.title}</Link>
-                    <span>/</span>
-                    <span>Session {session.sessionNumber}</span>
-                </div>
-                <h1 style={{ fontSize: '2rem' }}>{session.title}</h1>
-            </header>
-
+        <>
             <SessionClient project={project} session={session} />
-        </main>
+        </>
     );
 }

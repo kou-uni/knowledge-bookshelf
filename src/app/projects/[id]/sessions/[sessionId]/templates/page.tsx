@@ -1,14 +1,15 @@
-import { getTemplates } from '@/lib/store';
+import { TemplateService } from '@/lib/services/TemplateService';
 import { createTemplateAction, deleteTemplateAction } from '@/app/actions';
 import Link from 'next/link';
 
-export default async function InstructionTemplatesPage({ params }: { params: { id: string; sessionId: string } }) {
-    const templates = await getTemplates();
+export default async function TemplatesPage({ params }: { params: { id: string, sessionId: string } }) {
+    const templateService = new TemplateService();
+    const templates = await templateService.getTemplates();
 
     return (
         <main className="geist-container" style={{ padding: '80px 0', minHeight: '100vh' }}>
             <header style={{ marginBottom: '60px' }}>
-                <Link href={`/projects/${params.id}/sessions/${params.sessionId}`} style={{
+                <Link href={`/ projects / ${params.id} /sessions/${params.sessionId} `} style={{
                     color: 'var(--accents-5)',
                     fontSize: '0.875rem',
                     marginBottom: '24px',

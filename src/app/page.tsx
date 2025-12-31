@@ -1,9 +1,12 @@
-import { getProjects, seedSampleData } from '@/lib/store';
+import { ProjectService } from '@/lib/services/ProjectService';
+
+const projectService = new ProjectService();
+
 import { ProjectList } from '@/components/ProjectList';
 
 export default async function Home() {
-  await seedSampleData();
-  const projects = await getProjects();
+  await projectService.seedSampleData();
+  const projects = await projectService.getAllProjects();
 
   return (
     <main style={{ padding: '80px 0' }} className="geist-container">
