@@ -1,8 +1,8 @@
 import { IProjectRepository } from '../interfaces';
-import { Project } from '../../types'; // Path fixed
+import { Project } from '../../types';
 import { JsonAdapter } from '../../db/JsonAdapter';
 
-export class JsonProjectRepository implements IProjectRepository {
+export class JsonProjectRepo implements IProjectRepository {
     private adapter: JsonAdapter;
 
     constructor() {

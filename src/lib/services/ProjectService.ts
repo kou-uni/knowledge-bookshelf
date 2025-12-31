@@ -1,5 +1,5 @@
 import { IProjectRepository } from '../repositories/interfaces';
-import { JsonProjectRepository } from '../repositories/json/JsonProjectRepository';
+import { JsonProjectRepo } from '../repositories/json/JsonProjectRepo';
 import { Project, ProjectType } from '../types';
 
 export class ProjectService {
@@ -7,11 +7,11 @@ export class ProjectService {
 
     constructor() {
         // In a real app, this would be injected
-        this.projectRepo = new JsonProjectRepository();
+        this.projectRepo = new JsonProjectRepo();
     }
 
     async getAllProjects(): Promise<Project[]> {
-        return this.projectRepo.getAll();
+        return this.repo.getAll();
     }
 
     async getProject(id: string): Promise<Project | undefined> {
