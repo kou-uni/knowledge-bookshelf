@@ -52,7 +52,7 @@ export class KnowledgeService {
 
             // 1. Observation (Fact / Past)
             items.push({
-                id: Math.random().toString(36).substring(7),
+                id: crypto.randomUUID(),
                 projectId,
                 sourceInputId: input.id,
                 type: 'fact',
@@ -64,7 +64,7 @@ export class KnowledgeService {
 
             // 2. Analysis (Insight / Past)
             items.push({
-                id: Math.random().toString(36).substring(7),
+                id: crypto.randomUUID(),
                 projectId,
                 sourceInputId: input.id,
                 type: 'insight',
@@ -76,7 +76,7 @@ export class KnowledgeService {
 
             // 3. Decision (Fact / Future)
             items.push({
-                id: Math.random().toString(36).substring(7),
+                id: crypto.randomUUID(),
                 projectId,
                 sourceInputId: input.id,
                 type: 'fact',
@@ -88,7 +88,7 @@ export class KnowledgeService {
 
             // 4. Projection (Insight / Future)
             items.push({
-                id: Math.random().toString(36).substring(7),
+                id: crypto.randomUUID(),
                 projectId,
                 sourceInputId: input.id,
                 type: 'image_analysis',
@@ -101,7 +101,7 @@ export class KnowledgeService {
         } else if (input.type === 'voice') {
             // Voice Logic: 4 Quadrants
             items.push({
-                id: Math.random().toString(36).substring(7),
+                id: crypto.randomUUID(),
                 projectId,
                 sourceInputId: input.id,
                 type: 'quote',
@@ -111,7 +111,7 @@ export class KnowledgeService {
                 createdAt: now
             });
             items.push({
-                id: Math.random().toString(36).substring(7),
+                id: crypto.randomUUID(),
                 projectId,
                 sourceInputId: input.id,
                 type: 'insight',
@@ -121,7 +121,7 @@ export class KnowledgeService {
                 createdAt: now
             });
             items.push({
-                id: Math.random().toString(36).substring(7),
+                id: crypto.randomUUID(),
                 projectId,
                 sourceInputId: input.id,
                 type: 'fact',
@@ -133,7 +133,7 @@ export class KnowledgeService {
         } else {
             // Text / File Logic
             items.push({
-                id: Math.random().toString(36).substring(7),
+                id: crypto.randomUUID(),
                 projectId,
                 sourceInputId: input.id,
                 type: 'fact',
@@ -143,7 +143,7 @@ export class KnowledgeService {
                 createdAt: now
             });
             items.push({
-                id: Math.random().toString(36).substring(7),
+                id: crypto.randomUUID(),
                 projectId,
                 sourceInputId: input.id,
                 type: 'insight',
@@ -153,7 +153,7 @@ export class KnowledgeService {
                 createdAt: now
             });
             items.push({
-                id: Math.random().toString(36).substring(7),
+                id: crypto.randomUUID(),
                 projectId,
                 sourceInputId: input.id,
                 type: 'insight',

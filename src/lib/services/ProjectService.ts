@@ -1,5 +1,5 @@
 import { IProjectRepository } from '../repositories/interfaces';
-import { JsonProjectRepo } from '../repositories/json/JsonProjectRepo';
+import { PostgresProjectRepository } from '../repositories/postgres/PostgresProjectRepository';
 import { Project, ProjectType } from '../types';
 
 export class ProjectService {
@@ -7,7 +7,7 @@ export class ProjectService {
 
     constructor() {
         // In a real app, this would be injected
-        this.projectRepo = new JsonProjectRepo();
+        this.projectRepo = new PostgresProjectRepository();
     }
 
     async getAllProjects(): Promise<Project[]> {
@@ -20,7 +20,7 @@ export class ProjectService {
 
     async createProject(title: string, type: ProjectType, totalSessions: number = 10): Promise<Project> {
         const newProject: Project = {
-            id: Math.random().toString(36).substring(7),
+            id: crypto.randomUUID(),
             title,
             type,
             totalSessions,
@@ -31,7 +31,7 @@ export class ProjectService {
         // Initialize empty sessions
         for (let i = 1; i <= totalSessions; i++) {
             newProject.sessions.push({
-                id: Math.random().toString(36).substring(7),
+                id: crypto.randomUUID(),
                 projectId: newProject.id,
                 sessionNumber: i,
                 title: `Session ${i}`,
@@ -63,7 +63,7 @@ export class ProjectService {
         if (!project) throw new Error('Project not found');
 
         const newOutput: any = {
-            id: Math.random().toString(36).substring(7),
+            id: crypto.randomUUID(),
             skillId,
             type,
             title,

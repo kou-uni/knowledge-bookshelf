@@ -1,12 +1,12 @@
 import { ISessionRepository } from '../repositories/interfaces';
-import { JsonSessionRepository } from '../repositories/json/JsonSessionRepository';
+import { PostgresSessionRepository } from '../repositories/postgres/PostgresSessionRepository';
 import { Session, KnowledgeInput, InputType, SkillOutput, OutputType } from '../types';
 
 export class SessionService {
     private sessionRepo: ISessionRepository;
 
     constructor() {
-        this.sessionRepo = new JsonSessionRepository();
+        this.sessionRepo = new PostgresSessionRepository();
     }
 
     async getSession(projectId: string, sessionId: string): Promise<Session | undefined> {
@@ -18,7 +18,7 @@ export class SessionService {
         const nextNumber = sessions.length + 1;
 
         const newSession: Session = {
-            id: Math.random().toString(36).substring(7),
+            id: crypto.randomUUID(),
             projectId,
             sessionNumber: nextNumber,
             title: `Session ${nextNumber}`,
@@ -39,7 +39,7 @@ export class SessionService {
 
     async addInput(projectId: string, sessionId: string, type: InputType, title: string, content: string, rawUrl?: string, isAssignment?: boolean): Promise<KnowledgeInput | undefined> {
         const newInput: KnowledgeInput = {
-            id: Math.random().toString(36).substring(7),
+            id: crypto.randomUUID(),
             sessionId,
             type,
             title,
@@ -57,7 +57,7 @@ export class SessionService {
 
     async addOutput(projectId: string, sessionId: string, skillId: string, type: OutputType, title: string, content: string | object): Promise<SkillOutput | undefined> {
         const newOutput: SkillOutput = {
-            id: Math.random().toString(36).substring(7),
+            id: crypto.randomUUID(),
             sessionId,
             skillId,
             type,

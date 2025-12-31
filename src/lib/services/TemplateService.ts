@@ -1,12 +1,12 @@
 import { ITemplateRepository } from '../repositories/interfaces';
-import { JsonTemplateRepository } from '../repositories/json/JsonTemplateRepository';
+import { PostgresTemplateRepository } from '../repositories/postgres/PostgresTemplateRepository';
 import { InstructionTemplate } from '../types';
 
 export class TemplateService {
     private templateRepo: ITemplateRepository;
 
     constructor() {
-        this.templateRepo = new JsonTemplateRepository();
+        this.templateRepo = new PostgresTemplateRepository();
     }
 
     async getTemplates(): Promise<InstructionTemplate[]> {
@@ -15,7 +15,7 @@ export class TemplateService {
 
     async createTemplate(title: string, content: string): Promise<InstructionTemplate> {
         const newTemplate: InstructionTemplate = {
-            id: Math.random().toString(36).substring(7),
+            id: crypto.randomUUID(),
             title,
             content,
             createdAt: new Date().toISOString()
