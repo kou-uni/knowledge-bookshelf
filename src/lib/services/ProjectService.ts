@@ -11,7 +11,7 @@ export class ProjectService {
     }
 
     async getAllProjects(): Promise<Project[]> {
-        return this.repo.getAll();
+        return this.projectRepo.getAll();
     }
 
     async getProject(id: string): Promise<Project | undefined> {
