@@ -1,5 +1,5 @@
 import { IProjectRepository } from '../interfaces';
-import { Project } from '../../../types';
+import { Project } from '../../types';
 import { JsonAdapter } from '../../db/JsonAdapter';
 
 export class JsonProjectRepository implements IProjectRepository {

@@ -29,8 +29,7 @@ export async function generatePPTSkill(context: SkillContext): Promise<SkillResu
         // Title
         slide.addText(input.title, {
             x: 0.5, y: 0.5, w: '90%', h: 0.5,
-            fontSize: 24, color: 'FFFFFF', bold: true,
-            border: { pt: 0, color: '000000', type: 'none' } // reset
+            fontSize: 24, color: 'FFFFFF', bold: true
         });
         // Content
         slide.addText(input.content.substring(0, 1000), { // Truncate for now
