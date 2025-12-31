@@ -4,6 +4,8 @@ import { SessionService } from '@/lib/services/SessionService';
 import { ProjectService } from '@/lib/services/ProjectService';
 import { SessionClient } from '@/components/SessionClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function SessionPage({ params }: { params: { id: string; sessionId: string } }) {
     const sessionService = new SessionService();
     const projectService = new ProjectService();
