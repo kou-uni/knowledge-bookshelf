@@ -72,9 +72,22 @@ export function InputManager({ projectId, sessionId, onCancel }: { projectId: st
         formData.append('type', mode);
         formData.append('isAssignment', isAssignment.toString());
 
-        await addSessionInput(projectId, sessionId, formData);
-        setIsSubmitting(false);
-        onCancel(); // Close manager on success
+        try {
+            const result = await addSessionInput(projectId, sessionId, formData);
+
+            if (result?.error) {
+                alert(`Failed to save: ${result.error}`);
+                setIsSubmitting(false);
+                return;
+            }
+
+            setIsSubmitting(false);
+            onCancel(); // Close manager on success
+        } catch (e: any) {
+            console.error(e);
+            alert(`System Error: ${e.message || 'Unknown error occurred'}`);
+            setIsSubmitting(false);
+        }
     };
 
     return (

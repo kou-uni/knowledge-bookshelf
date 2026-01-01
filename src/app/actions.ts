@@ -89,11 +89,18 @@ export async function addSessionInput(projectId: string, sessionId: string, form
     if (type === 'photo') type = 'image';
 
     // Ensure we have content. If photo and no content provided (though frontend should provide it), fallback.
-    if (!content) return;
+    // Ensure we have content. If photo and no content provided (though frontend should provide it), fallback.
+    if (!content) return { error: 'Content is missing' };
 
-    const { sessionService } = getServices();
-    await sessionService.addInput(projectId, sessionId, type as InputType, title, content, imageData, isAssignment);
-    revalidatePath(`/projects/${projectId}/sessions/${sessionId}`);
+    try {
+        const { sessionService } = getServices();
+        await sessionService.addInput(projectId, sessionId, type as InputType, title, content, imageData, isAssignment);
+        revalidatePath(`/projects/${projectId}/sessions/${sessionId}`);
+        return { success: true };
+    } catch (e: any) {
+        console.error('Failed to add input:', e);
+        return { error: e.message || 'Failed to add input' };
+    }
 }
 
 export async function deleteSessionInputAction(projectId: string, sessionId: string, inputId: string) {
