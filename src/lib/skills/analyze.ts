@@ -1,34 +1,34 @@
 import { SkillContext, SkillResult, runLLM } from './base';
 
 export interface AnalysisResult {
-    objective: {
-        concepts: string[];
-        frameworks: string[];
-        evidence: string[];
-    };
-    subjective: {
-        observation: string;
-        interpretation: string;
-        application: string;
-    };
+  objective: {
+    concepts: string[];
+    frameworks: string[];
+    evidence: string[];
+  };
+  subjective: {
+    observation: string;
+    interpretation: string;
+    application: string;
+  };
 }
 
 export async function analyzeSessionSkill(context: SkillContext): Promise<SkillResult> {
-    const { session, inputs } = context;
+  const { session, inputs } = context;
 
-    if (inputs.length === 0) {
-        return {
-            title: 'Analysis (Empty)',
-            content: 'No inputs to analyze.',
-            type: 'analysis' as any // Temporary type cast until updated
-        };
-    }
+  if (inputs.length === 0) {
+    return {
+      title: 'Analysis (Empty)',
+      content: 'No inputs to analyze.',
+      type: 'analysis' as any // Temporary type cast until updated
+    };
+  }
 
-    const inputsText = inputs.map((input, i) => `
+  const inputsText = inputs.map((input, i) => `
     [Input ${i + 1}]: ${input.content}
   `).join('\n');
 
-    const systemPrompt = `
+  const systemPrompt = `
     You are an expert Analytic Engine for corporate training.
     Your goal is to normalize and structure raw inputs into two distinct categories:
     1. Structural Analysis (Objective)
@@ -49,22 +49,30 @@ export async function analyzeSessionSkill(context: SkillContext): Promise<SkillR
     }
   `;
 
-    const userContent = `
+  const userContent = `
     Session: ${session.title}
     Inputs:
     ${inputsText}
   `;
 
-    // Force JSON mode in prompt or post-process? 
-    // For MVP, we'll ask for JSON and try to parse it, or fallback to text.
-    const rawResponse = await runLLM(systemPrompt + "\nRETURN ONLY JSON.", userContent);
+  // Force JSON mode for reliability
+  const rawResponse = await runLLM(systemPrompt + "\nRETURN ONLY JSON.", userContent, true);
 
-    // Clean up code blocks if present
-    const jsonContent = rawResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+  // Clean up code blocks if present (just in case)
+  const jsonStr = rawResponse.replace(/```json/g, '').replace(/```/g, '').trim();
 
-    return {
-        title: 'Analyze: Structural & Reflective',
-        content: jsonContent,
-        type: 'analysis' as any
-    };
+  let contentObj: any;
+  try {
+    contentObj = JSON.parse(jsonStr);
+  } catch (e) {
+    console.error("Failed to parse analysis JSON", e);
+    // Fallback to string if parsing fails, but we strive for object
+    contentObj = jsonStr;
+  }
+
+  return {
+    title: 'Analyze: Structural & Reflective',
+    content: contentObj,
+    type: 'analysis' as any
+  };
 }
