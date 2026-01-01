@@ -34,17 +34,19 @@ export async function analyzeSessionSkill(context: SkillContext): Promise<SkillR
     1. Structural Analysis (Objective)
     2. Reflective Application (Subjective)
 
-    Output must be valid JSON with this schema:
+    Output must be valid JSON with this schema.
+    IMPORTANT: All values (concepts, observation, etc.) MUST be written in Japanese (日本語).
+
     {
       "objective": {
-        "concepts": ["List of core definitions"],
-        "frameworks": ["List of models/theories used"],
-        "evidence": ["List of facts/data cited"]
+        "concepts": ["List of core definitions (in Japanese)"],
+        "frameworks": ["List of models/theories used (in Japanese)"],
+        "evidence": ["List of facts/data cited (in Japanese)"]
       },
       "subjective": {
-        "observation": "What happened? (Fact-based summary of experience)",
-        "interpretation": "So What? (Meaning and insight derived)",
-        "application": "Now What? (Actionable next steps)"
+        "observation": "What happened? (Fact-based summary of experience in Japanese)",
+        "interpretation": "So What? (Meaning and insight derived in Japanese)",
+        "application": "Now What? (Actionable next steps in Japanese)"
       }
     }
   `;
