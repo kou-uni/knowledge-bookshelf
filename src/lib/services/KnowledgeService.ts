@@ -20,10 +20,10 @@ export class KnowledgeService {
         const input = session.inputs.find(i => i.id === inputId);
         if (!input) throw new Error('Input not found');
 
-        // 2. Mock Analysis (Simulate AI Latency)
-        await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5s delay
-
-        const newItems = this.mockAnalysisLogic(projectId, input);
+        // 2. Real AI Analysis
+        console.log(`[KnowledgeService] Starting AI analysis for input: ${input.id}`);
+        const newItems = await this.performAIAnalysis(projectId, input);
+        console.log(`[KnowledgeService] AI returned ${newItems.length} items`);
 
         // 3. Persist
         // Replace previous analysis for this specific input
