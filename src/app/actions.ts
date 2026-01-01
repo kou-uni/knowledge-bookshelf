@@ -216,9 +216,9 @@ export async function analyzeInputAction(projectId: string, sessionId: string, i
         const items = await knowledgeService.analyzeInput(projectId, sessionId, inputId);
         revalidatePath(`/projects/${projectId}/sessions/${sessionId}`);
         return { success: true, items };
-    } catch (e) {
+    } catch (e: any) {
         console.error(e);
-        return { error: 'Failed to extract knowledge' };
+        return { error: `Failed to extract knowledge: ${e.message || String(e)}` };
     }
 }
 

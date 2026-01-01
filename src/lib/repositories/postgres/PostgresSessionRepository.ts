@@ -90,13 +90,13 @@ export class PostgresSessionRepository implements ISessionRepository {
             // 1. Delete all for this session
             await sql`DELETE FROM knowledge_items WHERE session_id = ${sessionId}`;
 
-            // 2. Insert new ones
-            for (const item of updates.knowledgeItems) {
-                await sql`
+            // 2. Insert new ones (Parallelize to prevent timeout)
+            await Promise.all(updates.knowledgeItems.map(item =>
+                sql`
                     INSERT INTO knowledge_items (id, project_id, session_id, source_input_id, type, content, tags, importance, created_at)
                     VALUES (${item.id}, ${item.projectId}, ${sessionId}, ${item.sourceInputId}, ${item.type}, ${item.content}, ${JSON.stringify(item.tags) as any}, ${item.importance}, ${item.createdAt})
-                `;
-            }
+                `
+            ));
         }
 
         if (updates.title || updates.date || updates.preTask || updates.postTask) {
