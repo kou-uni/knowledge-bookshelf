@@ -78,12 +78,13 @@ IMPORTANT: The 'content' and 'tags' fields MUST be written in Japanese (日本�
         }
 
         try {
-            // Import dynamically to avoid circular dependencies if any, or just strictly use base
-            const { runLLM, runLLMWithVision } = await import('../skills/base');
+            // ...
+            const { runLLMWithVision } = await import('../skills/base');
 
-            const jsonStr = await runLLMWithVision(systemPrompt + "\nOutput JSON only.", userContent, imageUrl);
+            // [FIX] Use JSON Mode for reliability
+            const jsonStr = await runLLMWithVision(systemPrompt + "\nOutput valid JSON only.", userContent, imageUrl, true);
 
-            // Cleanup JSON block formatting if present
+            // Cleanup JSON block formatting if present (still good practice even with JSON mode)
             const cleanJson = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
             const parsed = JSON.parse(cleanJson);
 

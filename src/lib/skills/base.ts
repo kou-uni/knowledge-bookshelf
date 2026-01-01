@@ -12,7 +12,7 @@ export interface SkillResult {
     type: 'summary' | 'report' | 'homework' | 'ppt' | 'sns';
 }
 
-export async function runLLM(systemPrompt: string, userContent: string): Promise<string> {
+export async function runLLM(systemPrompt: string, userContent: string, jsonMode: boolean = false): Promise<string> {
     try {
         const openai = getOpenAIClient();
         const response = await openai.chat.completions.create({
@@ -22,6 +22,7 @@ export async function runLLM(systemPrompt: string, userContent: string): Promise
                 { role: 'user', content: userContent },
             ],
             temperature: 0.7,
+            response_format: jsonMode ? { type: 'json_object' } : undefined,
         });
         return response.choices[0]?.message?.content || '';
     } catch (error) {
@@ -30,7 +31,7 @@ export async function runLLM(systemPrompt: string, userContent: string): Promise
     }
 }
 
-export async function runLLMWithVision(systemPrompt: string, userContent: string, imageUrl?: string): Promise<string> {
+export async function runLLMWithVision(systemPrompt: string, userContent: string, imageUrl?: string, jsonMode: boolean = false): Promise<string> {
     try {
         const openai = getOpenAIClient();
 
@@ -59,7 +60,8 @@ export async function runLLMWithVision(systemPrompt: string, userContent: string
             model: 'gpt-4o',
             messages: messages,
             temperature: 0.7,
-            max_tokens: 1000,
+            max_tokens: 2000, // Increased for safety
+            response_format: jsonMode ? { type: 'json_object' } : undefined,
         });
 
         return response.choices[0]?.message?.content || '';
