@@ -137,8 +137,16 @@ function InputCard({ input, projectId, sessionId, knowledgeItems }: { input: Kno
 
     const handleAnalyze = async () => {
         setIsAnalyzing(true);
-        await analyzeInputAction(projectId, sessionId, input.id);
-        setIsAnalyzing(false);
+        try {
+            const result = await analyzeInputAction(projectId, sessionId, input.id);
+            if (result?.error) {
+                alert(`Analysis Failed: ${result.error}`);
+            }
+        } catch (e: any) {
+            alert(`System Error: ${e.message}`);
+        } finally {
+            setIsAnalyzing(false);
+        }
     };
 
     const myItems = knowledgeItems?.filter(k => k.sourceInputId === input.id) || [];
@@ -247,6 +255,28 @@ function InputCard({ input, projectId, sessionId, knowledgeItems }: { input: Kno
 
             {/* Extracted Knowledge Items */}
             <KnowledgeList items={myItems} />
+
+            {/* Analysis Loading Skeleton */}
+            {isAnalyzing && (
+                <div style={{ paddingTop: '16px', animation: 'fadeIn 0.3s ease' }}>
+                    <div className="skeleton-line" style={{ width: '100%', height: '20px', marginBottom: '8px', background: 'var(--accents-2)', borderRadius: '4px' }} />
+                    <div className="skeleton-line" style={{ width: '80%', height: '20px', marginBottom: '8px', background: 'var(--accents-2)', borderRadius: '4px' }} />
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                        <div className="skeleton-line" style={{ width: '60px', height: '16px', background: 'var(--accents-2)', borderRadius: '12px' }} />
+                        <div className="skeleton-line" style={{ width: '80px', height: '16px', background: 'var(--accents-2)', borderRadius: '12px' }} />
+                    </div>
+                </div>
+            )}
+            <style jsx>{`
+                @keyframes pulse {
+                    0% { opacity: 0.6; }
+                    50% { opacity: 1; }
+                    100% { opacity: 0.6; }
+                }
+                .skeleton-line {
+                    animation: pulse 1.5s infinite ease-in-out;
+                }
+            `}</style>
 
         </div>
     )
