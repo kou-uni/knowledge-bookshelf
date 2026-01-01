@@ -10,8 +10,13 @@ export default async function SessionPage({ params }: { params: { id: string; se
     const sessionService = new SessionService();
     const projectService = new ProjectService();
 
-    const session = await sessionService.getSession(params.id, params.sessionId);
-    const project = await projectService.getProject(params.id);
+    let session, project;
+    try {
+        session = await sessionService.getSession(params.id, params.sessionId);
+        project = await projectService.getProject(params.id);
+    } catch (e) {
+        console.warn("Failed to fetch session/project (build/migration):", e);
+    }
 
     if (!session || !project) {
         notFound();

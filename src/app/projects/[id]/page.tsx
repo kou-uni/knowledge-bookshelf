@@ -6,7 +6,12 @@ export const dynamic = 'force-dynamic';
 
 export default async function ProjectDetailPage({ params }: { params: { id: string } }) {
     const projectService = new ProjectService();
-    const project = await projectService.getProject(params.id);
+    let project;
+    try {
+        project = await projectService.getProject(params.id);
+    } catch (e) {
+        console.warn("Failed to fetch project (build/migration):", e);
+    }
 
     if (!project) {
         notFound();

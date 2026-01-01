@@ -6,7 +6,13 @@ export const dynamic = 'force-dynamic';
 
 export default async function TemplatesPage({ params }: { params: { id: string, sessionId: string } }) {
     const templateService = new TemplateService();
-    const templates = await templateService.getTemplates();
+    let templates: any[] = [];
+    try {
+        templates = await templateService.getTemplates();
+    } catch (e) {
+        console.warn("Failed to fetch templates (likely during build or before migration):", e);
+        templates = [];
+    }
 
     return (
         <main className="geist-container" style={{ padding: '80px 0', minHeight: '100vh' }}>
