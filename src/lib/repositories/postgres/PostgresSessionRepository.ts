@@ -136,6 +136,9 @@ export class PostgresSessionRepository implements ISessionRepository {
     }
 
     async addOutput(projectId: string, sessionId: string, output: SkillOutput): Promise<SkillOutput | undefined> {
+        // Ensure we overwrite previous output for this skill (avoid stale data)
+        await sql`DELETE FROM outputs WHERE scope_id = ${sessionId} AND skill_id = ${output.skillId}`;
+
         await sql`
             INSERT INTO outputs (id, scope_id, scope_type, skill_id, type, title, content, configuration, created_at)
             VALUES (${output.id}, ${sessionId}, 'SESSION', ${output.skillId}, ${output.type}, ${output.title}, ${JSON.stringify(output.content) as any}, ${JSON.stringify(output.metadata || {}) as any}, ${output.createdAt})
