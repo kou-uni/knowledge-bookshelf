@@ -124,8 +124,8 @@ export class PostgresSessionRepository implements ISessionRepository {
 
     async addInput(projectId: string, sessionId: string, input: KnowledgeInput): Promise<KnowledgeInput | undefined> {
         await sql`
-            INSERT INTO inputs (id, session_id, type, title, content, is_assignment, created_at)
-            VALUES (${input.id}, ${sessionId}, ${input.type}, ${input.title}, ${input.content || ''}, ${input.isAssignment || false}, ${input.createdAt})
+            INSERT INTO inputs (id, session_id, type, title, content, storage_path, is_assignment, created_at)
+            VALUES (${input.id}, ${sessionId}, ${input.type}, ${input.title}, ${input.content || ''}, ${input.rawUrl || null}, ${input.isAssignment || false}, ${input.createdAt})
         `;
         return input;
     }

@@ -43,127 +43,82 @@ export class KnowledgeService {
         return session?.knowledgeItems || [];
     }
 
-    private mockAnalysisLogic(projectId: string, input: KnowledgeInput): KnowledgeItem[] {
-        const items: KnowledgeItem[] = [];
+    /**
+     * Replaces mock logic with real OpenAI analysis.
+     */
+    private async performAIAnalysis(projectId: string, input: KnowledgeInput): Promise<KnowledgeItem[]> {
         const now = new Date().toISOString();
+        let systemPrompt = `
+You are an expert Knowledge Analyst. You analyze inputs (text, voice transcripts, or images) to extract "Knowledge Atoms".
+A Knowledge Atom corresponds to one of 4 types:
+1. Fact (Observation of reality, data)
+2. Insight (Interpretation, connection, pattern)
+3. Decision (Actionable conclusion, assignment)
+4. Projection (Future prediction, risk)
 
-        if (input.type === 'image') {
-            // Scene: Whiteboard Strategy Meeting
+You MUST output a JSON object with a key "items" which is an array of objects.
+Each object must have:
+- type: "fact" | "insight" | "quote" | "image_analysis"
+- content: string (Concise, clear)
+- tags: string[] (1-3 keywords)
+- importance: number (1-5)
 
-            // 1. Observation (Fact / Past)
-            items.push({
-                id: crypto.randomUUID(),
-                projectId,
-                sourceInputId: input.id,
-                type: 'fact',
-                content: '[Observation] Q3 Sales target is set to $1.2M (+20% YoY). Confirmed by Fin Dept.',
-                tags: ['Finance', 'Result', 'Target'],
-                importance: 5,
-                createdAt: now
-            });
+For images, use type "image_analysis" or "fact" depending on certainty.
+For text/voice, use "quote" if it's a direct important statement.
+`;
 
-            // 2. Analysis (Insight / Past)
-            items.push({
-                id: crypto.randomUUID(),
-                projectId,
-                sourceInputId: input.id,
-                type: 'insight',
-                content: '[Analysis] Customer Onboarding is identified as the primary bottleneck due to manual data entry.',
-                tags: ['Operations', 'Bottleneck', 'Analysis'],
-                importance: 4,
-                createdAt: now
-            });
+        let userContent = `Analyze this input:\nTitle: ${input.title}\nContent: ${input.content}`;
+        let imageUrl: string | undefined = undefined;
 
-            // 3. Decision (Fact / Future)
-            items.push({
-                id: crypto.randomUUID(),
-                projectId,
-                sourceInputId: input.id,
-                type: 'fact',
-                content: '[Decision] Action: Automate the entry process by End of Month. Assigned to Tech Team.',
-                tags: ['Decision', 'Tech', 'Time'], // Decision = Future Fact
-                importance: 5,
-                createdAt: now
-            });
-
-            // 4. Projection (Insight / Future)
-            items.push({
-                id: crypto.randomUUID(),
-                projectId,
-                sourceInputId: input.id,
-                type: 'image_analysis',
-                content: '[Projection] Diagram A suggests a circular dependency risk if Marketing API isn\'t ready.',
-                tags: ['Risk', 'Product', 'Diagram'],
-                importance: 3,
-                createdAt: now
-            });
-
-        } else if (input.type === 'voice') {
-            // Voice Logic: 4 Quadrants
-            items.push({
-                id: crypto.randomUUID(),
-                projectId,
-                sourceInputId: input.id,
-                type: 'quote',
-                content: '"We need to ship this before the competitor event in March." (Manager)',
-                tags: ['Deadline', 'Competitor', 'Urgent'],
-                importance: 5,
-                createdAt: now
-            });
-            items.push({
-                id: crypto.randomUUID(),
-                projectId,
-                sourceInputId: input.id,
-                type: 'insight',
-                content: '[Analysis] The team seems anxious about the tight deadline. Burnout risk detected.',
-                tags: ['InternalTeam', 'Sentiment', 'Risk'],
-                importance: 4,
-                createdAt: now
-            });
-            items.push({
-                id: crypto.randomUUID(),
-                projectId,
-                sourceInputId: input.id,
-                type: 'fact',
-                content: '[Decision] Action: Hire 2 contractors for QA tasks immediately.',
-                tags: ['Decision', 'HR', 'Budget'],
-                importance: 5,
-                createdAt: now
-            });
-        } else {
-            // Text / File Logic
-            items.push({
-                id: crypto.randomUUID(),
-                projectId,
-                sourceInputId: input.id,
-                type: 'fact',
-                content: `[Observation] Key metric found in document: Client Retention Rate = 85%.`,
-                tags: ['Client', 'Metric', 'Status'],
-                importance: 3,
-                createdAt: now
-            });
-            items.push({
-                id: crypto.randomUUID(),
-                projectId,
-                sourceInputId: input.id,
-                type: 'insight',
-                content: `[Analysis] The tone of the document suggests a strategic pivot towards Enterprise sales.`,
-                tags: ['Strategy', 'Analysis', 'Market'],
-                importance: 4,
-                createdAt: now
-            });
-            items.push({
-                id: crypto.randomUUID(),
-                projectId,
-                sourceInputId: input.id,
-                type: 'insight',
-                content: `[Projection] If trends continue, Q4 revenue might miss targets by 10%.`,
-                tags: ['Finance', 'Risk', 'Projection'],
-                importance: 5,
-                createdAt: now
-            });
+        if (input.type === 'image' && input.rawUrl) {
+            userContent = `Analyze this image input. Title: ${input.title}. The textual content provided is minimal, so rely on the visual information.`;
+            imageUrl = input.rawUrl;
         }
 
-        return items;
+        try {
+            // Import dynamically to avoid circular dependencies if any, or just strictly use base
+            const { runLLM, runLLMWithVision } = await import('../skills/base');
+
+            const jsonStr = await runLLMWithVision(systemPrompt + "\nOutput JSON only.", userContent, imageUrl);
+
+            // Cleanup JSON block formatting if present
+            const cleanJson = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
+            const parsed = JSON.parse(cleanJson);
+
+            if (!parsed.items || !Array.isArray(parsed.items)) {
+                console.warn('AI returned invalid structure:', cleanJson);
+                return [];
+            }
+
+            return parsed.items.map((item: any) => ({
+                id: crypto.randomUUID(),
+                projectId,
+                sourceInputId: input.id,
+                type: item.type || 'fact', // Fallback
+                content: item.content || '',
+                tags: item.tags || [],
+                importance: item.importance || 3,
+                createdAt: now
+            }));
+
+        } catch (e) {
+            console.error('Real AI Analysis Failed:', e);
+            // Fallback to a simple error item so UI shows something
+            return [{
+                id: crypto.randomUUID(),
+                projectId,
+                sourceInputId: input.id,
+                type: 'fact',
+                content: 'AI Analysis failed to parse the input. Please try again.',
+                tags: ['Error'],
+                importance: 5,
+                createdAt: now
+            }];
+        }
+    }
+
+    private mockAnalysisLogic(projectId: string, input: KnowledgeInput): KnowledgeItem[] {
+        // ... kept for reference if needed, but unused.
+        return [];
     }
 }
