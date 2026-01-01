@@ -222,7 +222,14 @@ function InputCard({ input, projectId, sessionId, knowledgeItems }: { input: Kno
                 </div>
             )}
 
-            <div style={{ color: 'var(--accents-5)', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+            <div style={{
+                color: 'var(--accents-5)',
+                lineHeight: '1.6',
+                whiteSpace: 'pre-wrap',
+                maxHeight: '240px', // Limit to approx 10 lines
+                overflowY: 'auto',   // Add scrollbar
+                paddingRight: '4px'  // Spacing for scrollbar
+            }}>
                 {input.content}
             </div>
 
