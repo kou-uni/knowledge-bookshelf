@@ -71,11 +71,7 @@ export class ProjectService {
             createdAt: new Date().toISOString()
         };
 
-        const currentOutputs = project.outputs || [];
-        await this.updateProject(projectId, {
-            outputs: [newOutput, ...currentOutputs]
-        });
-
-        return newOutput;
+        // Use repository method which handles persistence and overwriting
+        return this.projectRepo.addOutput(projectId, newOutput);
     }
 }

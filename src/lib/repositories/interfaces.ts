@@ -6,6 +6,7 @@ export interface IProjectRepository {
     create(project: Project): Promise<Project>;
     update(id: string, updates: Partial<Project>): Promise<Project | undefined>;
     delete(id: string): Promise<boolean>;
+    addOutput(projectId: string, output: SkillOutput): Promise<SkillOutput | undefined>;
 }
 
 export interface ISessionRepository {
