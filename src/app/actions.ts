@@ -221,3 +221,21 @@ export async function analyzeInputAction(projectId: string, sessionId: string, i
         return { error: 'Failed to extract knowledge' };
     }
 }
+
+export async function refineTextAction(text: string) {
+    if (!text) return { text: '' };
+    try {
+        const { runLLM } = await import('@/lib/skills/base');
+        const systemPrompt = `You are a professional editor. Your task is to clean up the provided voice transcript.
+        1. Remove filler words (e.g., "ah", "um", "uh", "like", "you know", "アー", "ウー", "えーと").
+        2. Fix grammar and punctuation slightly for readability, but keep the original meaning and tone.
+        3. Do NOT summarize. Keep the content full. 
+        4. Output ONLY the refined text.`;
+
+        const refined = await runLLM(systemPrompt, text);
+        return { text: refined };
+    } catch (e) {
+        console.error('Failed to refine text:', e);
+        return { text }; // Fallback to original
+    }
+}
