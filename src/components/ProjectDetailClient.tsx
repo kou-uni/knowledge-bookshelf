@@ -310,37 +310,12 @@ function NavButton({ label, targetId }: { label: string, targetId: string }) {
     )
 }
 
-function CountUp({ end }: { end: number }) {
-    const [count, setCount] = useState(0);
 
-    useEffect(() => {
-        let startTime: number;
-        const duration = 1500; // 1.5s as per guidline
-        const animate = (timestamp: number) => {
-            if (!startTime) startTime = timestamp;
-            const progress = timestamp - startTime;
-            const percentage = Math.min(progress / duration, 1);
-
-            // EaseOutQuad
-            const ease = 1 - (1 - percentage) * (1 - percentage);
-
-            setCount(Math.floor(ease * end));
-
-            if (progress < duration) {
-                requestAnimationFrame(animate);
-            }
-        };
-        requestAnimationFrame(animate);
-    }, [end]);
-
-    return <>{count}</>;
-}
 
 function ProjectAnalyticsSection({ project }: { project: Project }) {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const totalInputs = project.sessions.reduce((acc, s) => acc + s.inputs.length, 0);
-    const totalOutputs = project.sessions.reduce((acc, s) => acc + s.outputs.length, 0);
-    const totalWords = totalInputs * 450;
+
 
     // Find project-level analysis output (skillId 'analyze')
     // Project outputs are stored in `project.outputs`
@@ -361,27 +336,7 @@ function ProjectAnalyticsSection({ project }: { project: Project }) {
         <div style={{ marginBottom: '40px' }}>
             <h2 style={{ fontSize: '2rem', fontWeight: 200, marginBottom: '40px', borderBottom: '1px solid var(--accents-2)', paddingBottom: '20px' }}>Project Analytics</h2>
 
-            {/* Numeric Vitality */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '24px', marginBottom: '80px' }}>
-                <div className="geist-card" style={{ padding: '32px', border: '1px solid var(--accents-2)', borderRadius: '8px' }}>
-                    <div style={{ color: 'var(--accents-5)', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' }}>Total Inputs</div>
-                    <div style={{ fontSize: '3rem', fontWeight: 100 }}>
-                        <CountUp end={totalInputs} />
-                    </div>
-                </div>
-                <div className="geist-card" style={{ padding: '32px', border: '1px solid var(--accents-2)', borderRadius: '8px' }}>
-                    <div style={{ color: 'var(--accents-5)', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' }}>Total Words (Est)</div>
-                    <div style={{ fontSize: '3rem', fontWeight: 100 }}>
-                        <CountUp end={totalWords} />
-                    </div>
-                </div>
-                <div className="geist-card" style={{ padding: '32px', border: '1px solid var(--accents-2)', borderRadius: '8px' }}>
-                    <div style={{ color: 'var(--accents-5)', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' }}>Crystallization Ratio</div>
-                    <div style={{ fontSize: '3rem', fontWeight: 100 }}>
-                        <CountUp end={Math.floor((totalOutputs / (totalInputs || 1)) * 100)} />%
-                    </div>
-                </div>
-            </div>
+
 
             {/* Structural Analysis */}
             <section style={{ borderTop: '1px solid var(--accents-2)', paddingTop: '60px' }}>
