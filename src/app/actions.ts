@@ -86,8 +86,17 @@ export async function addSessionInput(projectId: string, sessionId: string, form
         title = `Untitled ${type.charAt(0).toUpperCase() + type.slice(1)}`;
     }
 
+    // Normalize and validate type against DB constraints
+    type = (type || '').trim().toLowerCase();
     if (type === 'photo') type = 'image';
-    if (type === 'upload') type = 'text'; // Fallback for file placeholders to satisfy DB constraint
+
+    const validTypes = ['text', 'pdf', 'voice', 'image'];
+    if (!validTypes.includes(type)) {
+        console.warn(`[addSessionInput] Invalid type '${type}' detected (not in schema). Mapped to 'text'.`);
+        type = 'text';
+    }
+
+    console.log(`[addSessionInput] Final Type: ${type}`);
 
     // Ensure we have content. If photo and no content provided (though frontend should provide it), fallback.
     // Ensure we have content. If photo and no content provided (though frontend should provide it), fallback.
