@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { addSessionInput } from '@/app/actions';
+import { addSessionInput, refineTextAction } from '@/app/actions';
 import { Check } from '@geist-ui/icons';
 
 type InputMode = 'text' | 'voice' | 'upload' | 'photo';
@@ -13,6 +13,7 @@ export function InputManager({ projectId, sessionId, onCancel }: { projectId: st
     // Voice State
     const [isRecording, setIsRecording] = useState(false);
     const [voiceTranscript, setVoiceTranscript] = useState('');
+    const [interimTranscript, setInterimTranscript] = useState('');
 
     // Common State
     const [title, setTitle] = useState('');
@@ -35,16 +36,22 @@ export function InputManager({ projectId, sessionId, onCancel }: { projectId: st
                 recognitionRef.current.interimResults = true;
 
                 recognitionRef.current.onresult = (event: any) => {
+                    let interim_transcript = '';
                     let final_transcript = '';
+
                     for (let i = event.resultIndex; i < event.results.length; ++i) {
                         if (event.results[i].isFinal) {
                             final_transcript += event.results[i][0].transcript;
+                        } else {
+                            interim_transcript += event.results[i][0].transcript;
                         }
                     }
+
                     if (final_transcript) {
                         setVoiceTranscript(prev => prev + ' ' + final_transcript);
                         setContent(prev => prev + ' ' + final_transcript);
                     }
+                    setInterimTranscript(interim_transcript);
                 };
 
                 recognitionRef.current.start();
@@ -68,7 +75,26 @@ export function InputManager({ projectId, sessionId, onCancel }: { projectId: st
             formData.append('imageData', previewUrl);
         }
 
-        formData.append('content', finalContent || voiceTranscript || '(File Upload Content Placeholder)');
+        if (mode === 'voice') {
+            // Refine text for voice inputs (remove fillers)
+            try {
+                // If content was edited manually, use content. Else use transcript.
+                const rawText = content || voiceTranscript;
+                if (rawText) {
+                    setIsSubmitting(true);
+                    const { text } = await refineTextAction(rawText);
+                    formData.append('content', text);
+                } else {
+                    formData.append('content', '');
+                }
+            } catch (e) {
+                console.error('Refinement failed:', e);
+                formData.append('content', content || voiceTranscript);
+            }
+        } else {
+            formData.append('content', finalContent || voiceTranscript || '(File Upload Content Placeholder)');
+        }
+
         formData.append('type', mode);
         formData.append('isAssignment', isAssignment.toString());
 
@@ -159,6 +185,7 @@ export function InputManager({ projectId, sessionId, onCancel }: { projectId: st
                                 </p>
                                 <div style={{ textAlign: 'center', marginTop: '16px', maxHeight: '100px', overflowY: 'auto', fontSize: '0.9rem', color: '#fff', padding: '0 20px' }}>
                                     {voiceTranscript}
+                                    <span style={{ opacity: 0.6 }}> {interimTranscript}</span>
                                 </div>
                             </div>
                         )}
