@@ -120,7 +120,7 @@ export async function deleteSessionInputAction(projectId: string, sessionId: str
     revalidatePath(`/projects/${projectId}/sessions/${sessionId}`);
 }
 
-export async function runSessionSkill(projectId: string, sessionId: string, skillId: string) {
+export async function runSessionSkill(projectId: string, sessionId: string, skillId: string, options?: any) {
     const { sessionService } = getServices();
     const session = await sessionService.getSession(projectId, sessionId);
     if (!session) return { error: 'Session not found' };
@@ -166,10 +166,11 @@ export async function runSessionSkill(projectId: string, sessionId: string, skil
 
     if (skillId === 'pack') {
         try {
-            const result = await generateNotebookLMPackSkill({ session, inputs: session.inputs });
+            // Pass options to the skill
+            const result = await generateNotebookLMPackSkill({ session, inputs: session.inputs, options });
             const { sessionService } = getServices();
             // Use 'pack' as type, but ensure it's valid in DB or types. Ideally 'pack' matches OutputType.
-            await sessionService.addOutput(projectId, sessionId, skillId, result.type as any, result.title || 'NotebookLM Pack', result.content as string);
+            await sessionService.addOutput(projectId, sessionId, skillId, result.type as any, result.title || 'Knowledge Pack', result.content as string);
             revalidatePath(`/projects/${projectId}/sessions/${sessionId}`);
             return { success: true };
         } catch (e) {
@@ -199,7 +200,7 @@ export async function deleteTemplateAction(id: string) {
     revalidatePath('/');
 }
 
-export async function runProjectSkill(projectId: string, skillId: string) {
+export async function runProjectSkill(projectId: string, skillId: string, options?: any) {
     const { projectService } = getServices();
     const project = await projectService.getProject(projectId);
     if (!project) return { error: 'Project not found' };
@@ -232,8 +233,8 @@ export async function runProjectSkill(projectId: string, skillId: string) {
                 sessionTitle: s.title
             })));
 
-            const result = await generateProjectNotebookLMPackSkill({ project, inputs: allInputs });
-            await projectService.addOutput(projectId, skillId, result.type as any, result.title || 'Project Pack', result.content as string);
+            const result = await generateProjectNotebookLMPackSkill({ project, inputs: allInputs, options });
+            await projectService.addOutput(projectId, skillId, result.type as any, result.title || 'Knowledge Pack', result.content as string);
             revalidatePath(`/projects/${projectId}`);
             return { success: true };
         } catch (e) {

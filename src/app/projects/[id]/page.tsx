@@ -1,6 +1,7 @@
 import { ProjectService } from '@/lib/services/ProjectService';
 import { ProjectDetailClient } from '@/components/ProjectDetailClient';
 import { notFound } from 'next/navigation';
+import { Providers } from '@/components/Providers';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,5 +18,9 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
         notFound();
     }
 
-    return <ProjectDetailClient project={project} />;
+    return (
+        <Providers>
+            <ProjectDetailClient project={project} />
+        </Providers>
+    );
 }

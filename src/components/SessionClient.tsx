@@ -555,9 +555,10 @@ function CopyButton({ text }: { text: string }) {
 
 // function OutputSection({ project, session, isPending }: any) {
 // (Simplifying for diff: replacing the entire function content logic)
+// (Simplifying for diff: replacing the entire function content logic)
 function OutputSection({ project, session, isPending }: any) {
     const [strategy, setStrategy] = useState<'presentation' | 'document' | 'pack'>('pack'); // Default to pack as it's the active one
-    const [activeAudience, setActiveAudience] = useState('Executive');
+    const [activeAudience, setActiveAudience] = useState('Public');
     const [activeStructure, setActiveStructure] = useState('Strategic');
     const [isGenerating, setIsGenerating] = useState(false);
 
@@ -568,7 +569,11 @@ function OutputSection({ project, session, isPending }: any) {
         if (strategy !== 'pack') return; // Only pack is implemented
         setIsGenerating(true);
         try {
-            const result = await runSessionSkill(project.id, session.id, 'pack');
+            // Pass context options to the skill
+            const result = await runSessionSkill(project.id, session.id, 'pack', {
+                audience: activeAudience,
+                structure: activeStructure
+            });
             if (result && result.error) {
                 alert(`Generation Failed: ${result.error}`);
             }
@@ -613,7 +618,6 @@ function OutputSection({ project, session, isPending }: any) {
         <section style={{ marginTop: '80px', borderTop: '1px solid var(--accents-2)', paddingTop: '60px', paddingBottom: '120px' }}>
             <header style={{ marginBottom: '40px' }}>
                 <h2 className="variant-section" style={{ marginBottom: '8px' }}>Strategy & Crystallization</h2>
-                <p style={{ color: 'var(--accents-5)' }}>Define your output strategy and crystallize knowledge into tangible assets.</p>
             </header>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '60px' }}>
@@ -621,26 +625,12 @@ function OutputSection({ project, session, isPending }: any) {
                 {/* STRATEGY & WORKBENCH */}
                 <div>
                     {/* 1. STRATEGY SELECTOR */}
-                    <div style={{ display: 'flex', gap: '16px', marginBottom: '32px' }}>
-                        <StrategyCard
-                            active={strategy === 'presentation'}
-                            onClick={() => setStrategy('presentation')}
-                            icon={<Monitor />}
-                            label="Presentation"
-                            comingSoon
-                        />
-                        <StrategyCard
-                            active={strategy === 'document'}
-                            onClick={() => setStrategy('document')}
-                            icon={<Layout />}
-                            label="Document"
-                            comingSoon
-                        />
+                    <div style={{ display: 'flex', gap: '16px', marginBottom: '32px', justifyContent: 'center' }}>
                         <StrategyCard
                             active={strategy === 'pack'}
                             onClick={() => setStrategy('pack')}
                             icon={<Package />}
-                            label="NotebookLM Pack"
+                            label="Knowledge Pack"
                         />
                     </div>
 
@@ -665,7 +655,7 @@ function OutputSection({ project, session, isPending }: any) {
                                 <div>
                                     <label className="variant-label" style={{ display: 'block', marginBottom: '12px' }}>Structure</label>
                                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                        {['Strategic', 'Technical', 'Educational'].map(structure => (
+                                        {['Technical', 'Strategic', 'Educational'].map(structure => (
                                             <ContextKnob
                                                 key={structure}
                                                 label={structure}

@@ -427,20 +427,34 @@ function ProjectAnalyticsSection({ project }: { project: Project }) {
     )
 }
 
+import PresentationGenerator from './PresentationGenerator';
+
 function ProjectStrategySection({ project }: { project: Project }) {
-    const [strategy, setStrategy] = useState<'presentation' | 'document' | 'pack'>('pack'); // Default to pack as it's the active one
-    const [activeAudience, setActiveAudience] = useState('Executive');
+    const [strategy, setStrategy] = useState<'presentation' | 'document' | 'pack'>('pack');
+    const [activeAudience, setActiveAudience] = useState('Public');
     const [activeStructure, setActiveStructure] = useState('Strategic');
     const [isGenerating, setIsGenerating] = useState(false);
+    const [showPresentationModal, setShowPresentationModal] = useState(false);
 
     // Filter real artifacts from project outputs
-    const artifacts = project.outputs?.filter((o: SkillOutput) => o.skillId === 'pack' || o.type === 'pack').sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) || [];
+    const artifacts = project.outputs?.filter((o: SkillOutput) => o.skillId === 'pack' || o.type === 'pack' || o.type === 'presentation' || o.skillId === 'ppt').sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) || [];
 
     const handleGenerate = async () => {
+        if (strategy === 'presentation') {
+            setShowPresentationModal(true);
+            return;
+        }
+
         if (strategy !== 'pack') return;
         setIsGenerating(true);
+        // ... (existing pack logic)
+
         try {
-            const result = await runProjectSkill(project.id, 'pack');
+            // Pass options to project skill
+            const result = await runProjectSkill(project.id, 'pack', {
+                audience: activeAudience,
+                structure: activeStructure
+            });
             if (result && result.error) {
                 alert(`Generation Failed: ${result.error}`);
             }
@@ -484,11 +498,8 @@ function ProjectStrategySection({ project }: { project: Project }) {
     return (
         <div>
             <h2 style={{ fontSize: '2rem', fontWeight: 200, marginBottom: '40px', borderBottom: '1px solid var(--accents-2)', paddingBottom: '20px' }}>Strategy & Crystallization</h2>
-            <p style={{ color: 'var(--accents-5)', marginBottom: '32px' }}>Synthesize the entire project curriculum into a final deliverable.</p>
 
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '32px' }}>
-                <StrategyCard active={strategy === 'presentation'} onClick={() => setStrategy('presentation')} label="Master Presentation" icon={<Monitor />} comingSoon />
-                <StrategyCard active={strategy === 'document'} onClick={() => setStrategy('document')} label="Full Report" icon={<Layout />} comingSoon />
+            <div style={{ display: 'flex', gap: '16px', marginBottom: '32px', justifyContent: 'center' }}>
                 <StrategyCard active={strategy === 'pack'} onClick={() => setStrategy('pack')} label="Knowledge Pack" icon={<Package />} />
             </div>
 
@@ -513,7 +524,7 @@ function ProjectStrategySection({ project }: { project: Project }) {
                         <div style={{ flex: 1 }}>
                             <label style={{ display: 'block', marginBottom: '12px', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--accents-5)', textAlign: 'center' }}>Structure</label>
                             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                                {['Strategic', 'Technical', 'Educational'].map(structure => (
+                                {['Technical', 'Strategic', 'Educational'].map(structure => (
                                     <ContextKnob
                                         key={structure}
                                         label={structure}
@@ -555,7 +566,7 @@ function ProjectStrategySection({ project }: { project: Project }) {
                         e.currentTarget.style.borderColor = 'var(--accents-2)';
                     }}
                 >
-                    {isGenerating ? 'CRYSTALLIZING...' : `GENERATE ${strategy.toUpperCase()}`}
+                    {isGenerating ? 'CRYSTALLIZING...' : (strategy === 'presentation' ? 'OPEN PRESENTATION WIZARD' : `GENERATE ${strategy.toUpperCase()}`)}
                 </button>
                 {isGenerating && (
                     <div style={{ marginTop: '16px', width: '100%', height: '4px', background: 'var(--accents-2)', borderRadius: '2px', overflow: 'hidden' }}>
@@ -606,6 +617,14 @@ function ProjectStrategySection({ project }: { project: Project }) {
                     </div>
                 ))}
             </div>
+
+            <PresentationGenerator
+                project={project}
+                visible={showPresentationModal}
+                onClose={() => setShowPresentationModal(false)}
+                audience={activeAudience}
+                structure={activeStructure}
+            />
         </div>
     )
 }

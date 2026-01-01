@@ -3,6 +3,8 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 
+import { Providers } from "@/components/Providers";
+
 export const metadata: Metadata = {
   title: "Knowledge Bookshelf",
   description: "Your personal knowledge accumulation and RAG source library.",

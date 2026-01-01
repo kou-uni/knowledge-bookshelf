@@ -92,4 +92,9 @@ export interface KnowledgeStore {
 export interface SkillInput {
     session: Session | { title: string; date?: string;[key: string]: any };
     inputs: KnowledgeInput[];
+    options?: {
+        audience?: string;
+        structure?: string;
+        [key: string]: any;
+    };
 }
