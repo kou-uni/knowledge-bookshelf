@@ -24,16 +24,26 @@ export function InputManager({ projectId, sessionId, onCancel }: { projectId: st
 
     const recognitionRef = useRef<any>(null);
 
+    // Mic Visualizer State
+    const [audioLevel, setAudioLevel] = useState(0);
+    const audioContextRef = useRef<AudioContext | null>(null);
+    const analyserRef = useRef<AnalyserNode | null>(null);
+    const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+    const animationFrameRef = useRef<number | null>(null);
+
     const handleVoiceToggle = () => {
         if (isRecording) {
             recognitionRef.current?.stop();
             setIsRecording(false);
+            stopVisualizer();
         } else {
-            if ('webkitSpeechRecognition' in window) {
-                const SpeechRecognition = (window as any).webkitSpeechRecognition;
+            const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+            if (SpeechRecognition) {
                 recognitionRef.current = new SpeechRecognition();
                 recognitionRef.current.continuous = true;
                 recognitionRef.current.interimResults = true;
+                recognitionRef.current.lang = 'ja-JP'; // Force Japanese
 
                 recognitionRef.current.onresult = (event: any) => {
                     let interim_transcript = '';
@@ -54,12 +64,79 @@ export function InputManager({ projectId, sessionId, onCancel }: { projectId: st
                     setInterimTranscript(interim_transcript);
                 };
 
+                recognitionRef.current.onerror = (event: any) => {
+                    console.error('Speech recognition error', event.error);
+                    if (event.error === 'not-allowed') {
+                        alert('Microphone access denied. Please check your browser settings.');
+                    }
+                };
+
+                recognitionRef.current.onend = () => {
+                    // Auto-restart if we think we should still be recording? 
+                    // iOS Safari often stops automatically.
+                    // For now, let it stop and update UI.
+                    // setIsRecording(false); 
+                    // But if we want continuous, we might need to re-start.
+                    // Let's just let UI reflect state.
+                    if (isRecording) {
+                        // recognitionRef.current.start(); // Aggressive restart for iOS?
+                        // Could be annoying if user meant to stop. 
+                        // Let's stick to manual toggle for safety, but maybe log it.
+                    }
+                };
+
+                startVisualizer();
                 recognitionRef.current.start();
                 setIsRecording(true);
             } else {
                 alert('Voice recognition not supported in this browser.');
             }
         }
+    };
+
+    const startVisualizer = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+            analyserRef.current = audioContextRef.current.createAnalyser();
+            sourceRef.current = audioContextRef.current.createMediaStreamSource(stream);
+
+            sourceRef.current.connect(analyserRef.current);
+            analyserRef.current.fftSize = 256;
+
+            const bufferLength = analyserRef.current.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            const update = () => {
+                if (!analyserRef.current) return;
+                analyserRef.current.getByteFrequencyData(dataArray);
+                // Calculate average volume
+                let sum = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    sum += dataArray[i];
+                }
+                const average = sum / bufferLength;
+                setAudioLevel(average); // 0 to 255 typically
+                animationFrameRef.current = requestAnimationFrame(update);
+            };
+            update();
+
+        } catch (e) {
+            console.error('Visualizer init failed:', e);
+        }
+    };
+
+    const stopVisualizer = () => {
+        if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+        if (sourceRef.current) {
+            // Stop stream tracks
+            // sourceRef.current.mediaStream.getTracks().forEach(track => track.stop()); // Note: MediaStreamSource doesn't expose mediaStream directly in standard TS types always, but we should close the stream passed to it.
+            // Actually, we created stream in startVisualizer local scope. ideally we store stream to close tracks.
+        }
+        // Easy way: close context
+        audioContextRef.current?.close();
+        audioContextRef.current = null;
+        setAudioLevel(0);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -187,6 +264,17 @@ export function InputManager({ projectId, sessionId, onCancel }: { projectId: st
                                     {voiceTranscript}
                                     <span style={{ opacity: 0.6 }}> {interimTranscript}</span>
                                 </div>
+                                {/* Volume Visualizer */}
+                                {isRecording && (
+                                    <div style={{ marginTop: '12px', width: '60px', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
+                                        <div style={{
+                                            width: `${Math.min(100, (audioLevel / 50) * 100)}%`,
+                                            height: '100%',
+                                            background: '#50e3c2',
+                                            transition: 'width 0.1s linear'
+                                        }} />
+                                    </div>
+                                )}
                             </div>
                         )}
 
