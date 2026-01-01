@@ -93,16 +93,27 @@ IMPORTANT: The 'content' and 'tags' fields MUST be written in Japanese (日本�
                 return [];
             }
 
-            return parsed.items.map((item: any) => ({
-                id: crypto.randomUUID(),
-                projectId,
-                sourceInputId: input.id,
-                type: item.type || 'fact', // Fallback
-                content: item.content || '',
-                tags: item.tags || [],
-                importance: item.importance || 3,
-                createdAt: now
-            }));
+            return parsed.items.map((item: any) => {
+                // strict normalization to satisfy DB constraint "knowledge_items_type_check"
+                let itemType = (item.type || '').toLowerCase().trim();
+                const validTypes = ['fact', 'insight', 'quote', 'image_analysis'];
+
+                if (!validTypes.includes(itemType)) {
+                    // console.warn(`[AI Analysis] Invalid type '${itemType}' mapped to 'fact'`);
+                    itemType = 'fact';
+                }
+
+                return {
+                    id: crypto.randomUUID(),
+                    projectId,
+                    sourceInputId: input.id,
+                    type: itemType, // Guaranteed to be valid
+                    content: item.content || '',
+                    tags: item.tags || [],
+                    importance: item.importance || 3,
+                    createdAt: now
+                };
+            });
 
         } catch (e) {
             console.error('Real AI Analysis Failed:', e);
