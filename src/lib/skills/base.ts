@@ -1,5 +1,5 @@
 import { KnowledgeInput, Session } from '../types';
-import { openai } from '../ai';
+import { getOpenAIClient } from '../ai';
 
 export interface SkillContext {
     session: Session;
@@ -14,6 +14,7 @@ export interface SkillResult {
 
 export async function runLLM(systemPrompt: string, userContent: string): Promise<string> {
     try {
+        const openai = getOpenAIClient();
         const response = await openai.chat.completions.create({
             model: 'gpt-4o',
             messages: [
