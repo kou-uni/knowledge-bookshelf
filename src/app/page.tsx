@@ -1,5 +1,8 @@
 import { ProjectService } from '@/lib/services/ProjectService';
 
+export const dynamic = 'force-dynamic';
+
+
 const projectService = new ProjectService();
 
 import { ProjectList } from '@/components/ProjectList';
