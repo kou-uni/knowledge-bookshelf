@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { addSessionInput, refineTextAction } from '@/app/actions';
+import { addSessionInput, refineTextAction, extractFileText } from '@/app/actions';
 import { Check } from '@geist-ui/icons';
 
 type InputMode = 'text' | 'voice' | 'upload' | 'photo';
@@ -283,18 +283,57 @@ export function InputManager({ projectId, sessionId, onCancel }: { projectId: st
                             <div
                                 style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px dashed var(--accents-2)', borderRadius: '8px', height: '100%' }}
                                 onDragOver={(e) => e.preventDefault()}
-                                onDrop={(e) => {
+                                onDrop={async (e) => {
                                     e.preventDefault();
                                     const file = e.dataTransfer.files[0];
                                     if (file) {
-                                        setFileToUpload(file);
-                                        setContent(`Uploaded file: ${file.name} (${file.type})`);
+                                        setIsSubmitting(true);
+                                        const fd = new FormData();
+                                        fd.append('file', file);
+                                        const res = await extractFileText(fd);
+
+                                        if (res.error) {
+                                            alert(res.error);
+                                            setIsSubmitting(false);
+                                        } else if (res.text) {
+                                            setContent(res.text);
+                                            setTitle(file.name);
+                                            setMode('text');
+                                            setIsSubmitting(false);
+                                        }
                                     }
                                 }}
                             >
-                                <p style={{ color: 'var(--accents-5)' }}>Drag & Drop files here</p>
-                                <p style={{ fontSize: '0.8rem', color: 'var(--accents-3)' }}>PDF, DOC, MP3, WAV, Images</p>
-                                {fileToUpload && <p style={{ marginTop: '10px', color: '#fff' }}>Selected: {fileToUpload.name}</p>}
+                                <p style={{ color: 'var(--accents-5)' }}>Drag & Drop PDF or Text file here</p>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--accents-3)' }}>The file will be read and converted to text immediately.</p>
+                                <div style={{ marginTop: '16px' }}>
+                                    <input
+                                        type="file"
+                                        accept=".pdf,.txt,.md,.json"
+                                        style={{ display: 'none' }}
+                                        id="file-input"
+                                        onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                setIsSubmitting(true);
+                                                const fd = new FormData();
+                                                fd.append('file', file);
+                                                const res = await extractFileText(fd);
+
+                                                if (res.error) {
+                                                    alert(res.error);
+                                                    setIsSubmitting(false);
+                                                } else if (res.text) {
+                                                    setContent(res.text);
+                                                    setTitle(file.name);
+                                                    setMode('text');
+                                                    setIsSubmitting(false);
+                                                }
+                                            }
+                                        }}
+                                    />
+                                    <label htmlFor="file-input" className="geist-btn" style={{ background: 'var(--accents-2)', color: '#fff', cursor: 'pointer', fontSize: '0.875rem' }}>Select File</label>
+                                </div>
                             </div>
                         )}
 
