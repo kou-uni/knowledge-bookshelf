@@ -455,8 +455,8 @@ function ProjectStrategySection({ project }: { project: Project }) {
             <p style={{ color: 'var(--accents-5)', marginBottom: '32px' }}>Synthesize the entire project curriculum into a final deliverable.</p>
 
             <div style={{ display: 'flex', gap: '16px', marginBottom: '32px' }}>
-                <StrategyCard active={strategy === 'presentation'} onClick={() => setStrategy('presentation')} label="Master Presentation" icon={<Monitor />} />
-                <StrategyCard active={strategy === 'document'} onClick={() => setStrategy('document')} label="Full Report" icon={<Layout />} />
+                <StrategyCard active={strategy === 'presentation'} onClick={() => setStrategy('presentation')} label="Master Presentation" icon={<Monitor />} comingSoon />
+                <StrategyCard active={strategy === 'document'} onClick={() => setStrategy('document')} label="Full Report" icon={<Layout />} comingSoon />
                 <StrategyCard active={strategy === 'pack'} onClick={() => setStrategy('pack')} label="Knowledge Pack" icon={<Package />} />
             </div>
 
@@ -560,34 +560,51 @@ function ProjectStrategySection({ project }: { project: Project }) {
     )
 }
 
-function StrategyCard({ active, onClick, label, icon }: any) {
+function StrategyCard({ active, onClick, label, icon, comingSoon }: any) {
     return (
         <button
-            onClick={onClick}
+            onClick={comingSoon ? undefined : onClick}
+            disabled={comingSoon}
             style={{
                 background: active ? 'rgba(255,255,255,0.1)' : 'transparent',
-                color: active ? '#fff' : 'var(--accents-5)',
+                color: active ? '#fff' : (comingSoon ? 'var(--accents-3)' : 'var(--accents-5)'),
                 border: 'none',
                 borderRadius: '999px',
                 padding: '8px 24px',
-                cursor: 'pointer',
+                cursor: comingSoon ? 'not-allowed' : 'pointer',
                 textAlign: 'center',
                 transition: 'all 0.2s ease',
                 fontSize: '0.9rem',
                 letterSpacing: '0.05em',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '8px',
+                position: 'relative',
+                opacity: comingSoon ? 0.6 : 1
             }}
             onMouseEnter={(e) => {
-                if (!active) e.currentTarget.style.color = '#fff';
+                if (!active && !comingSoon) e.currentTarget.style.color = '#fff';
             }}
             onMouseLeave={(e) => {
-                if (!active) e.currentTarget.style.color = 'var(--accents-5)';
+                if (!active && !comingSoon) e.currentTarget.style.color = 'var(--accents-5)';
             }}
         >
             {icon && <span>{icon}</span>}
             {label}
+            {comingSoon && (
+                <span style={{
+                    fontSize: '0.6rem',
+                    background: 'var(--accents-2)',
+                    color: 'var(--accents-5)',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    marginLeft: '4px',
+                    fontWeight: 600,
+                    textTransform: 'uppercase'
+                }}>
+                    SOON
+                </span>
+            )}
         </button>
     )
 }
