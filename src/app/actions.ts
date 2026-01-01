@@ -8,6 +8,7 @@ import { InputType, Project, Session } from '@/lib/types';
 import { summarizeSessionSkill } from '@/lib/skills/summarize';
 import { generatePPTSkill } from '@/lib/skills/ppt';
 import { analyzeSessionSkill } from '@/lib/skills/analyze';
+import { generateNotebookLMPackSkill } from '@/lib/skills/crystallize';
 
 import { KnowledgeService } from '@/lib/services/KnowledgeService';
 
@@ -160,6 +161,20 @@ export async function runSessionSkill(projectId: string, sessionId: string, skil
         } catch (e) {
             console.error(e);
             return { error: 'Failed to run PPT skill' };
+        }
+    }
+
+    if (skillId === 'pack') {
+        try {
+            const result = await generateNotebookLMPackSkill({ session, inputs: session.inputs });
+            const { sessionService } = getServices();
+            // Use 'pack' as type, but ensure it's valid in DB or types. Ideally 'pack' matches OutputType.
+            await sessionService.addOutput(projectId, sessionId, skillId, result.type as any, result.title || 'NotebookLM Pack', result.content as string);
+            revalidatePath(`/projects/${projectId}/sessions/${sessionId}`);
+            return { success: true };
+        } catch (e) {
+            console.error(e);
+            return { error: 'Failed to generate NotebookLM Pack' };
         }
     }
 

@@ -553,43 +553,59 @@ function CopyButton({ text }: { text: string }) {
     )
 }
 
+// function OutputSection({ project, session, isPending }: any) {
+// (Simplifying for diff: replacing the entire function content logic)
 function OutputSection({ project, session, isPending }: any) {
-    const [strategy, setStrategy] = useState<'presentation' | 'document' | 'pack'>('presentation');
+    const [strategy, setStrategy] = useState<'presentation' | 'document' | 'pack'>('pack'); // Default to pack as it's the active one
     const [activeAudience, setActiveAudience] = useState('Executive');
     const [activeStructure, setActiveStructure] = useState('Strategic');
     const [isGenerating, setIsGenerating] = useState(false);
-    const [generatedArtifacts, setGeneratedArtifacts] = useState<any[]>([]); // Mocking local state for demo
+
+    // Filter real artifacts from session outputs
+    const artifacts = session.outputs.filter((o: SkillOutput) => o.skillId === 'pack' || o.type === 'pack').sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     const handleCrystallize = async () => {
+        if (strategy !== 'pack') return; // Only pack is implemented
         setIsGenerating(true);
-        // Mock delay for generation
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Mock adding an artifact
-        const newArtifact = {
-            id: Date.now().toString(),
-            type: strategy,
-            title: strategy === 'presentation' ? `${activeAudience} ${activeStructure} Deck` : strategy === 'document' ? `${activeStructure} Report` : `${activeAudience} ${activeStructure} Pack`,
-            date: new Date().toLocaleTimeString()
-        };
-        setGeneratedArtifacts(prev => [newArtifact, ...prev]);
-        setIsGenerating(false);
+        try {
+            const result = await runSessionSkill(project.id, session.id, 'pack');
+            if (result && result.error) {
+                alert(`Generation Failed: ${result.error}`);
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Failed to generate pack');
+        } finally {
+            setIsGenerating(false);
+        }
     };
 
-    const handleShare = async (artifact: any) => {
-        // Mock share functionality
+    const handleDownload = (artifact: SkillOutput) => {
+        const blob = new Blob([artifact.content as string], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${artifact.title}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    const handleShare = async (artifact: SkillOutput) => {
         if (navigator.share) {
             try {
                 await navigator.share({
                     title: artifact.title,
-                    text: `Check out this ${artifact.type}: ${artifact.title}`,
-                    url: window.location.href // Sharing current session URL for now as placeholder
+                    text: artifact.content as string, // Sharing content might be too large, but let's try or just title
                 });
             } catch (err) {
                 console.log('Error sharing:', err);
             }
         } else {
-            alert(`Sharing ${artifact.title} to Google Drive... (Mock)`);
+            // Fallback to copy content
+            navigator.clipboard.writeText(artifact.content as string);
+            alert('Content copied to clipboard for NotebookLM!');
         }
     };
 
@@ -708,18 +724,18 @@ function OutputSection({ project, session, isPending }: any) {
                     </div>
                 </div>
 
-                {/* ARTIFACT GALLERY (Moved below) */}
+                {/* ARTIFACT GALLERY */}
                 <div>
                     <h3 className="variant-label" style={{ marginBottom: '24px' }}>Artifacts</h3>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
-                        {generatedArtifacts.length === 0 && (
+                        {artifacts.length === 0 && (
                             <div style={{ padding: '32px', textAlign: 'center', color: 'var(--accents-4)', border: '1px dashed var(--accents-3)', borderRadius: '8px', gridColumn: '1 / -1' }}>
                                 <Archive size={32} />
                                 <p style={{ fontSize: '0.875rem', marginTop: '12px' }}>No artifacts crystallized yet.</p>
                             </div>
                         )}
-                        {generatedArtifacts.map((artifact) => (
+                        {artifacts.map((artifact) => (
                             <div key={artifact.id} className="geist-card" style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '16px', animation: 'fadeIn 0.5s ease' }}>
                                 <div style={{
                                     width: '40px', height: '40px',
@@ -731,19 +747,25 @@ function OutputSection({ project, session, isPending }: any) {
                                 }}>
                                     {artifact.type === 'pack' ? <Package size={20} /> : <Monitor size={20} />}
                                 </div>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{artifact.title}</div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--accents-4)' }}>{artifact.date} • 2.4 MB</div>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ fontWeight: 500, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{artifact.title}</div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--accents-4)' }}>
+                                        {new Date(artifact.createdAt).toLocaleDateString()} • MARKDOWN
+                                    </div>
                                 </div>
-                                <div style={{ display: 'flex', gap: '8px' }}>
+                                <div style={{ display: 'flex', gap: '4px' }}>
                                     <button
                                         onClick={() => handleShare(artifact)}
-                                        title="Share to Google Drive"
+                                        title="Share / Copy for NotebookLM"
                                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accents-4)', padding: '8px' }}
                                     >
                                         <Share size={20} />
                                     </button>
-                                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accents-4)', padding: '8px' }}>
+                                    <button
+                                        onClick={() => handleDownload(artifact)}
+                                        title="Download Markdown"
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accents-4)', padding: '8px' }}
+                                    >
                                         <Download size={20} />
                                     </button>
                                 </div>
