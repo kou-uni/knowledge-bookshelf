@@ -87,6 +87,7 @@ export async function addSessionInput(projectId: string, sessionId: string, form
     }
 
     if (type === 'photo') type = 'image';
+    if (type === 'upload') type = 'text'; // Fallback for file placeholders to satisfy DB constraint
 
     // Ensure we have content. If photo and no content provided (though frontend should provide it), fallback.
     // Ensure we have content. If photo and no content provided (though frontend should provide it), fallback.
