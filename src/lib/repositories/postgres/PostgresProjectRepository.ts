@@ -37,6 +37,7 @@ export class PostgresProjectRepository implements IProjectRepository {
             SELECT * FROM inputs 
             WHERE session_id IN (SELECT id FROM sessions WHERE project_id = ${id})
         `;
+        console.log(`[ProjectRepo] Fetched ${sessionRows.length} sessions and ${inputRows.length} inputs for project ${id}`);
 
         // 4. Fetch Outputs (Project level AND Session level)
         // We fetch project outputs here. Session outputs could be fetched too.
@@ -52,11 +53,11 @@ export class PostgresProjectRepository implements IProjectRepository {
             const session = this.mapRowToSession(sRow);
             session.inputs = inputRows
                 .filter(i => i.session_id === sRow.id)
-                .map(this.mapRowToInput);
+                .map(row => this.mapRowToInput(row)); // Explicit arrow function binding
 
             session.outputs = outputRows
                 .filter(o => o.scope_type === 'SESSION' && o.scope_id === sRow.id)
-                .map(this.mapRowToOutput);
+                .map(row => this.mapRowToOutput(row)); // Explicit arrow function binding
 
             return session;
         });

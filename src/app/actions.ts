@@ -193,6 +193,7 @@ export async function runProjectSkill(projectId: string, skillId: string) {
         try {
             // Aggregate all inputs
             const allInputs = project.sessions.flatMap(s => s.inputs);
+            console.log(`[runProjectSkill] Analyzing Project ${projectId}: Found ${project.sessions.length} sessions and ${allInputs.length} total inputs.`);
 
             // Mock session context for the skill
             const mockSession = { title: `Project Analysis: ${project.title}` } as any;
@@ -203,7 +204,7 @@ export async function runProjectSkill(projectId: string, skillId: string) {
             revalidatePath(`/projects/${projectId}`);
             return { success: true };
         } catch (e) {
-            console.error(e);
+            console.error('[runProjectSkill] Error:', e);
             return { error: 'Failed to run project analysis' };
         }
     }

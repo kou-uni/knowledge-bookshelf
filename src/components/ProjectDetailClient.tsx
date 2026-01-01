@@ -350,7 +350,10 @@ function ProjectAnalyticsSection({ project }: { project: Project }) {
         setIsAnalyzing(true);
         // Skeleton Law: visible flicker
         await new Promise(resolve => setTimeout(resolve, 1500));
-        await runProjectSkill(project.id, 'analyze');
+        const result = await runProjectSkill(project.id, 'analyze');
+        if (result && result.error) {
+            alert(`Analysis Failed: ${result.error}`);
+        }
         setIsAnalyzing(false);
     };
 
