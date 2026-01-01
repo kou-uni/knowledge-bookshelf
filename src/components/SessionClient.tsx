@@ -385,7 +385,7 @@ function AnalysisSection({ session, projectId, isAnalyzing, setIsAnalyzing }: an
                             <CopyButton text="Reflective synthesis based on the objective structures identified above. (Integration pending)" />
                         </h3>
                         <div style={{ fontSize: '1rem', lineHeight: '1.8', color: 'var(--accents-6)' }}>
-                            <p>Reflective synthesis based on the objective structures identified above. (Integration pending)</p>
+                            <SubjectiveViewer content={analysisOutput.content} />
                         </div>
                     </div>
                 </div>
@@ -418,12 +418,25 @@ function SkeletonScreen() {
     )
 }
 
-function AnalysisViewer({ content }: { content: string }) {
-    let data;
+function safeParseAnalysis(content: string | object) {
+    if (typeof content === 'object' && content !== null) return content;
     try {
-        data = JSON.parse(content);
+        const parsed = JSON.parse(content as string);
+        // Double parse check (if the DB stored it as a stringified string)
+        if (typeof parsed === 'string') {
+            try { return JSON.parse(parsed); } catch { return parsed; }
+        }
+        return parsed;
     } catch {
-        return <ReactMarkdown>{content}</ReactMarkdown>;
+        return null;
+    }
+}
+
+function AnalysisViewer({ content }: { content: string | object }) {
+    const data = safeParseAnalysis(content);
+
+    if (!data || !data.objective) {
+        return <ReactMarkdown>{typeof content === 'string' ? content : JSON.stringify(content)}</ReactMarkdown>;
     }
 
     return (
@@ -450,30 +463,64 @@ function AnalysisViewer({ content }: { content: string }) {
                             </ul>
                         </div>
                     )}
+                    {data.objective.evidence && (
+                        <div style={{ marginTop: '24px' }}>
+                            <strong style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>Evidence</strong>
+                            <ul style={{ paddingLeft: '20px', margin: 0 }}>
+                                {data.objective.evidence.map((e: string, i: number) => (
+                                    <li key={i} style={{ marginBottom: '4px' }}>{e}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 </>
             )}
-            {!data.objective && <ReactMarkdown>{content}</ReactMarkdown>}
         </div>
     )
 }
 
-function formatObjectiveContent(content: string): string {
-    try {
-        const data = JSON.parse(content);
-        if (data.objective) {
-            let output = '';
-            if (data.objective.concepts && Array.isArray(data.objective.concepts)) {
-                output += 'Key Concepts:\n' + data.objective.concepts.join(', ') + '\n\n';
-            }
-            if (data.objective.frameworks && Array.isArray(data.objective.frameworks)) {
-                output += 'Frameworks:\n' + data.objective.frameworks.map((f: string) => '- ' + f).join('\n');
-            }
-            return output.trim() || content;
-        }
-        return content;
-    } catch {
-        return content;
+function SubjectiveViewer({ content }: { content: string | object }) {
+    const data = safeParseAnalysis(content);
+    if (!data || !data.subjective) {
+        return <p style={{ color: 'var(--accents-5)' }}>No subjective analysis available.</p>;
     }
+
+    const { observation, interpretation, application } = data.subjective;
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {observation && (
+                <div>
+                    <strong style={{ display: 'block', marginBottom: '4px', fontSize: '0.85rem', color: 'var(--accents-5)' }}>OBSERVATION</strong>
+                    <p style={{ margin: 0 }}>{observation}</p>
+                </div>
+            )}
+            {interpretation && (
+                <div>
+                    <strong style={{ display: 'block', marginBottom: '4px', fontSize: '0.85rem', color: 'var(--accents-5)' }}>INTERPRETATION</strong>
+                    <p style={{ margin: 0 }}>{interpretation}</p>
+                </div>
+            )}
+            {application && (
+                <div>
+                    <strong style={{ display: 'block', marginBottom: '4px', fontSize: '0.85rem', color: 'var(--accents-5)' }}>APPLICATION</strong>
+                    <p style={{ margin: 0 }}>{application}</p>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function formatObjectiveContent(content: string | object): string {
+    const data = safeParseAnalysis(content);
+    if (data && data.objective) {
+        let output = '';
+        if (data.objective.concepts) output += 'Key Concepts:\n' + data.objective.concepts.join(', ') + '\n\n';
+        if (data.objective.frameworks) output += 'Frameworks:\n' + data.objective.frameworks.map((f: string) => '- ' + f).join('\n') + '\n\n';
+        if (data.objective.evidence) output += 'Evidence:\n' + data.objective.evidence.map((f: string) => '- ' + f).join('\n');
+        return output.trim();
+    }
+    return typeof content === 'string' ? content : JSON.stringify(content);
 }
 
 function CopyButton({ text }: { text: string }) {

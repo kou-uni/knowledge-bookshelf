@@ -58,8 +58,17 @@ export async function analyzeSessionSkill(context: SkillContext): Promise<SkillR
   // Force JSON mode for reliability
   const rawResponse = await runLLM(systemPrompt + "\nRETURN ONLY JSON.", userContent, true);
 
-  // Clean up code blocks if present (just in case)
-  const jsonStr = rawResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+  // Robust JSON extraction (find outer braces)
+  const firstBrace = rawResponse.indexOf('{');
+  const lastBrace = rawResponse.lastIndexOf('}');
+
+  let jsonStr = rawResponse;
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    jsonStr = rawResponse.substring(firstBrace, lastBrace + 1);
+  } else {
+    // Fallback cleanup
+    jsonStr = rawResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+  }
 
   let contentObj: any;
   try {
