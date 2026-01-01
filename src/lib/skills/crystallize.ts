@@ -6,7 +6,7 @@ export async function generateNotebookLMPackSkill({ session, inputs }: SkillInpu
     const inputContent = inputs.map(i => `[${i.type.toUpperCase()}] ${i.title}:\n${i.content}`).join('\n\n---\n\n');
 
     // Check if there is existing analysis to include
-    const existingAnalysis = session.outputs?.find(o => o.skillId === 'analyze');
+    const existingAnalysis = session.outputs?.find((o: any) => o.skillId === 'analyze');
     let analysisContext = "";
     if (existingAnalysis) {
         const content = typeof existingAnalysis.content === 'string' ? existingAnalysis.content : JSON.stringify(existingAnalysis.content, null, 2);

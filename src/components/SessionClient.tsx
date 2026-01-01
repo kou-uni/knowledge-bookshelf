@@ -735,7 +735,7 @@ function OutputSection({ project, session, isPending }: any) {
                                 <p style={{ fontSize: '0.875rem', marginTop: '12px' }}>No artifacts crystallized yet.</p>
                             </div>
                         )}
-                        {artifacts.map((artifact) => (
+                        {artifacts.map((artifact: SkillOutput) => (
                             <div key={artifact.id} className="geist-card" style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '16px', animation: 'fadeIn 0.5s ease' }}>
                                 <div style={{
                                     width: '40px', height: '40px',

@@ -1,5 +1,5 @@
 import { IProjectRepository } from '../interfaces';
-import { Project } from '../../types';
+import { Project, SkillOutput } from '../../types';
 import { JsonAdapter } from '../../db/JsonAdapter';
 
 export class JsonProjectRepo implements IProjectRepository {
@@ -46,5 +46,18 @@ export class JsonProjectRepo implements IProjectRepository {
             return true;
         }
         return false;
+    }
+
+    async addOutput(projectId: string, output: SkillOutput): Promise<SkillOutput | undefined> {
+        const store = await this.adapter.readStore();
+        const index = store.projects.findIndex(p => p.id === projectId);
+        if (index === -1) return undefined;
+
+        if (!store.projects[index].outputs) {
+            store.projects[index].outputs = [];
+        }
+        store.projects[index].outputs.push(output);
+        await this.adapter.writeStore(store);
+        return output;
     }
 }

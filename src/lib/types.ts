@@ -89,3 +89,7 @@ export interface KnowledgeStore {
     projects: Project[];
     templates?: InstructionTemplate[];
 }
+export interface SkillInput {
+    session: Session | { title: string; date?: string;[key: string]: any };
+    inputs: KnowledgeInput[];
+}
