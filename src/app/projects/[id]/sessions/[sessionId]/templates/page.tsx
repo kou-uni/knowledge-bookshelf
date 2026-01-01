@@ -5,14 +5,16 @@ import Link from 'next/link';
 export const dynamic = 'force-dynamic';
 
 export default async function TemplatesPage({ params }: { params: { id: string, sessionId: string } }) {
-    const templateService = new TemplateService();
-    let templates: any[] = [];
-    try {
-        templates = await templateService.getTemplates();
-    } catch (e) {
-        console.warn("Failed to fetch templates (likely during build or before migration):", e);
-        templates = [];
-    }
+    // TEMPORARY: Disable DB access for initial build/migration
+    // const templateService = new TemplateService();
+    // let templates: any[] = [];
+    // try {
+    //     templates = await templateService.getTemplates();
+    // } catch (e) {
+    //     console.warn("Failed to fetch templates (likely during build or before migration):", e);
+    //     templates = [];
+    // }
+    const templates: any[] = [];
 
     return (
         <main className="geist-container" style={{ padding: '80px 0', minHeight: '100vh' }}>
