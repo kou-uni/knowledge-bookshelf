@@ -65,6 +65,8 @@ Each object must have:
 
 For images, use type "image_analysis" or "fact" depending on certainty.
 For text/voice, use "quote" if it's a direct important statement.
+
+IMPORTANT: The 'content' and 'tags' fields MUST be written in Japanese (日本語).
 `;
 
         let userContent = `Analyze this input:\nTitle: ${input.title}\nContent: ${input.content}`;
