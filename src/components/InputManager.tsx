@@ -100,188 +100,210 @@ export function InputManager({ projectId, sessionId, onCancel }: { projectId: st
                 <TabButton active={mode === 'photo'} onClick={() => setMode('photo')}>Photo</TabButton>
             </div>
 
-            <form onSubmit={handleSubmit}>
-                <input
-                    value={title}
-                    onChange={e => setTitle(e.target.value)}
-                    placeholder="SOURCE TITLE (Optional)"
-                    className="geist-input"
-                    style={{ marginBottom: '12px' }}
-                />
+            {isSubmitting ? (
+                <div style={{ padding: '20px', animation: 'fadeIn 0.3s ease' }}>
+                    <div className="skeleton" style={{ height: '24px', width: '60%', marginBottom: '16px', background: 'var(--accents-2)', borderRadius: '4px' }} />
+                    <div className="skeleton" style={{ height: '200px', width: '100%', marginBottom: '16px', background: 'var(--accents-2)', borderRadius: '8px' }} />
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        <div className="skeleton" style={{ height: '40px', flex: 1, background: 'var(--accents-2)', borderRadius: '999px' }} />
+                        <div className="skeleton" style={{ height: '40px', flex: 1, background: 'var(--accents-2)', borderRadius: '999px' }} />
+                    </div>
+                    <p style={{ textAlign: 'center', marginTop: '12px', color: 'var(--accents-4)', fontSize: '0.875rem' }}>Processing input...</p>
+                    <style jsx>{`
+                        @keyframes pulse {
+                            0% { opacity: 0.6; }
+                            50% { opacity: 1; }
+                            100% { opacity: 0.6; }
+                        }
+                        .skeleton {
+                            animation: pulse 1.5s infinite ease-in-out;
+                        }
+                    `}</style>
+                </div>
+            ) : (
+                <form onSubmit={handleSubmit}>
+                    <input
+                        value={title}
+                        onChange={e => setTitle(e.target.value)}
+                        placeholder="SOURCE TITLE (Optional)"
+                        className="geist-input"
+                        style={{ marginBottom: '12px' }}
+                    />
 
-                <div style={{ height: '360px', display: 'flex', flexDirection: 'column' }}>
-                    {/* TEXT MODE */}
-                    {mode === 'text' && (
-                        <textarea
-                            value={content}
-                            onChange={e => setContent(e.target.value)}
-                            placeholder="Paste text content here..."
-                            className="geist-input"
-                            style={{ flex: 1, resize: 'none', marginBottom: '0', height: '100%' }}
-                            required
-                        />
-                    )}
-
-                    {/* VOICE MODE */}
-                    {mode === 'voice' && (
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px dashed var(--accents-2)', borderRadius: '8px', height: '100%' }}>
-                            <button
-                                type="button"
-                                onClick={handleVoiceToggle}
-                                className={`geist-btn ${isRecording ? 'error' : 'secondary'}`}
-                                style={{ width: '80px', height: '80px', borderRadius: '50%', marginBottom: '16px' }}
-                            >
-                                {isRecording ? 'STOP' : 'REC'}
-                            </button>
-                            <p style={{ color: 'var(--accents-5)' }}>
-                                {isRecording ? 'Listening...' : 'Click to start recording'}
-                            </p>
-                            <div style={{ textAlign: 'center', marginTop: '16px', maxHeight: '100px', overflowY: 'auto', fontSize: '0.9rem', color: '#fff', padding: '0 20px' }}>
-                                {voiceTranscript}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* UPLOAD MODE */}
-                    {mode === 'upload' && (
-                        <div
-                            style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px dashed var(--accents-2)', borderRadius: '8px', height: '100%' }}
-                            onDragOver={(e) => e.preventDefault()}
-                            onDrop={(e) => {
-                                e.preventDefault();
-                                const file = e.dataTransfer.files[0];
-                                if (file) {
-                                    setFileToUpload(file);
-                                    setContent(`Uploaded file: ${file.name} (${file.type})`);
-                                }
-                            }}
-                        >
-                            <p style={{ color: 'var(--accents-5)' }}>Drag & Drop files here</p>
-                            <p style={{ fontSize: '0.8rem', color: 'var(--accents-3)' }}>PDF, DOC, MP3, WAV, Images</p>
-                            {fileToUpload && <p style={{ marginTop: '10px', color: '#fff' }}>Selected: {fileToUpload.name}</p>}
-                        </div>
-                    )}
-
-                    {/* PHOTO MODE */}
-                    {mode === 'photo' && (
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
-                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '12px', overflow: 'hidden' }}>
-                                {previewUrl ? (
-                                    <div style={{ textAlign: 'center', position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                        <img
-                                            src={previewUrl}
-                                            alt="Preview"
-                                            style={{
-                                                maxWidth: '100%',
-                                                maxHeight: '100%',
-                                                objectFit: 'contain',
-                                                borderRadius: '8px',
-                                                border: '1px solid var(--accents-2)',
-                                                display: 'block',
-                                                margin: '0 auto'
-                                            }}
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setPreviewUrl(null);
-                                                setFileToUpload(null);
-                                                setContent('');
-                                            }}
-                                            className="geist-btn secondary"
-                                            style={{
-                                                marginTop: '8px',
-                                                width: '100%',
-                                                borderColor: 'var(--accents-2)',
-                                                color: '#fff',
-                                                fontSize: '0.8rem',
-                                                padding: '4px'
-                                            }}
-                                        >
-                                            RETAKE
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <CameraCapture onCapture={(file, url) => {
-                                        setFileToUpload(file);
-                                        setPreviewUrl(url);
-                                        setContent(`Photo captured: ${file.name}`);
-                                    }} />
-                                )}
-                            </div>
+                    <div style={{ height: '360px', display: 'flex', flexDirection: 'column' }}>
+                        {/* TEXT MODE */}
+                        {mode === 'text' && (
                             <textarea
                                 value={content}
                                 onChange={e => setContent(e.target.value)}
-                                placeholder="Add a description for your photo (optional)"
+                                placeholder="Paste text content here..."
                                 className="geist-input"
-                                rows={2}
-                                style={{ resize: 'none', marginBottom: '0' }}
+                                style={{ flex: 1, resize: 'none', marginBottom: '0', height: '100%' }}
+                                required
                             />
-                        </div>
-                    )}
-                </div>
+                        )}
 
-                {/* Optional content description for file/photo uploads */}
-                {/* Removed separate textarea block as it's now integrated */}
+                        {/* VOICE MODE */}
+                        {mode === 'voice' && (
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px dashed var(--accents-2)', borderRadius: '8px', height: '100%' }}>
+                                <button
+                                    type="button"
+                                    onClick={handleVoiceToggle}
+                                    className={`geist-btn ${isRecording ? 'error' : 'secondary'}`}
+                                    style={{ width: '80px', height: '80px', borderRadius: '50%', marginBottom: '16px' }}
+                                >
+                                    {isRecording ? 'STOP' : 'REC'}
+                                </button>
+                                <p style={{ color: 'var(--accents-5)' }}>
+                                    {isRecording ? 'Listening...' : 'Click to start recording'}
+                                </p>
+                                <div style={{ textAlign: 'center', marginTop: '16px', maxHeight: '100px', overflowY: 'auto', fontSize: '0.9rem', color: '#fff', padding: '0 20px' }}>
+                                    {voiceTranscript}
+                                </div>
+                            </div>
+                        )}
 
-                <div
-                    onClick={() => setIsAssignment(!isAssignment)}
-                    style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', userSelect: 'none' }}
-                >
-                    <div style={{
-                        width: '20px', height: '20px',
-                        borderRadius: '4px',
-                        border: isAssignment ? 'none' : '1px solid var(--accents-4)',
-                        background: isAssignment ? '#fff' : 'transparent',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        transition: 'all 0.2s ease'
-                    }}>
-                        {isAssignment && <Check size={14} color="#000" />}
+                        {/* UPLOAD MODE */}
+                        {mode === 'upload' && (
+                            <div
+                                style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px dashed var(--accents-2)', borderRadius: '8px', height: '100%' }}
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={(e) => {
+                                    e.preventDefault();
+                                    const file = e.dataTransfer.files[0];
+                                    if (file) {
+                                        setFileToUpload(file);
+                                        setContent(`Uploaded file: ${file.name} (${file.type})`);
+                                    }
+                                }}
+                            >
+                                <p style={{ color: 'var(--accents-5)' }}>Drag & Drop files here</p>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--accents-3)' }}>PDF, DOC, MP3, WAV, Images</p>
+                                {fileToUpload && <p style={{ marginTop: '10px', color: '#fff' }}>Selected: {fileToUpload.name}</p>}
+                            </div>
+                        )}
+
+                        {/* PHOTO MODE */}
+                        {mode === 'photo' && (
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '12px', overflow: 'hidden' }}>
+                                    {previewUrl ? (
+                                        <div style={{ textAlign: 'center', position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                            <img
+                                                src={previewUrl}
+                                                alt="Preview"
+                                                style={{
+                                                    maxWidth: '100%',
+                                                    maxHeight: '100%',
+                                                    objectFit: 'contain',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid var(--accents-2)',
+                                                    display: 'block',
+                                                    margin: '0 auto'
+                                                }}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setPreviewUrl(null);
+                                                    setFileToUpload(null);
+                                                    setContent('');
+                                                }}
+                                                className="geist-btn secondary"
+                                                style={{
+                                                    marginTop: '8px',
+                                                    width: '100%',
+                                                    borderColor: 'var(--accents-2)',
+                                                    color: '#fff',
+                                                    fontSize: '0.8rem',
+                                                    padding: '4px'
+                                                }}
+                                            >
+                                                RETAKE
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <CameraCapture onCapture={(file, url) => {
+                                            setFileToUpload(file);
+                                            setPreviewUrl(url);
+                                            setContent(`Photo captured: ${file.name}`);
+                                        }} />
+                                    )}
+                                </div>
+                                <textarea
+                                    value={content}
+                                    onChange={e => setContent(e.target.value)}
+                                    placeholder="Add a description for your photo (optional)"
+                                    className="geist-input"
+                                    rows={2}
+                                    style={{ resize: 'none', marginBottom: '0' }}
+                                />
+                            </div>
+                        )}
                     </div>
-                    <span style={{ color: isAssignment ? '#fff' : 'var(--accents-5)', fontSize: '0.875rem', fontWeight: 500, letterSpacing: '0.02em', transition: 'color 0.2s' }}>
-                        Core Assignment / Official Material
-                    </span>
-                </div>
 
-                <div style={{ display: 'flex', gap: '12px' }}>
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        className="geist-btn"
-                        style={{
-                            flex: 1,
-                            background: 'transparent',
-                            border: '1px solid var(--accents-2)',
-                            color: 'var(--accents-5)',
-                            borderRadius: '999px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            fontSize: '0.875rem',
-                            letterSpacing: '0.05em'
-                        }}
+                    {/* Optional content description for file/photo uploads */}
+                    {/* Removed separate textarea block as it's now integrated */}
+
+                    <div
+                        onClick={() => setIsAssignment(!isAssignment)}
+                        style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', userSelect: 'none' }}
                     >
-                        CANCEL
-                    </button>
-                    <button
-                        type="submit"
-                        className="geist-btn"
-                        style={{
-                            flex: 1,
-                            background: 'var(--accents-1)',
-                            border: '1px solid var(--accents-2)',
-                            color: '#fff',
-                            borderRadius: '999px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            fontSize: '0.875rem',
-                            letterSpacing: '0.05em'
-                        }}
-                        disabled={isSubmitting || (mode !== 'text' && mode !== 'voice' && !fileToUpload)}
-                    >
-                        SAVE INPUT
-                    </button>
-                </div>
-            </form>
+                        <div style={{
+                            width: '20px', height: '20px',
+                            borderRadius: '4px',
+                            border: isAssignment ? 'none' : '1px solid var(--accents-4)',
+                            background: isAssignment ? '#fff' : 'transparent',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            transition: 'all 0.2s ease'
+                        }}>
+                            {isAssignment && <Check size={14} color="#000" />}
+                        </div>
+                        <span style={{ color: isAssignment ? '#fff' : 'var(--accents-5)', fontSize: '0.875rem', fontWeight: 500, letterSpacing: '0.02em', transition: 'color 0.2s' }}>
+                            Core Assignment / Official Material
+                        </span>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        <button
+                            type="button"
+                            onClick={onCancel}
+                            className="geist-btn"
+                            style={{
+                                flex: 1,
+                                background: 'transparent',
+                                border: '1px solid var(--accents-2)',
+                                color: 'var(--accents-5)',
+                                borderRadius: '999px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                fontSize: '0.875rem',
+                                letterSpacing: '0.05em'
+                            }}
+                        >
+                            CANCEL
+                        </button>
+                        <button
+                            type="submit"
+                            className="geist-btn"
+                            style={{
+                                flex: 1,
+                                background: 'var(--accents-1)',
+                                border: '1px solid var(--accents-2)',
+                                color: '#fff',
+                                borderRadius: '999px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                fontSize: '0.875rem',
+                                letterSpacing: '0.05em'
+                            }}
+                            disabled={isSubmitting || (mode !== 'text' && mode !== 'voice' && !fileToUpload)}
+                        >
+                            SAVE INPUT
+                        </button>
+                    </div>
+                </form>
+            )}
         </div>
     );
 }
