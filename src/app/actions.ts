@@ -8,7 +8,7 @@ import { InputType, Project, Session } from '@/lib/types';
 import { summarizeSessionSkill } from '@/lib/skills/summarize';
 import { generatePPTSkill } from '@/lib/skills/ppt';
 import { analyzeSessionSkill } from '@/lib/skills/analyze';
-import { generateNotebookLMPackSkill } from '@/lib/skills/crystallize';
+import { generateNotebookLMPackSkill, generateProjectNotebookLMPackSkill } from '@/lib/skills/crystallize';
 
 import { KnowledgeService } from '@/lib/services/KnowledgeService';
 
@@ -223,6 +223,25 @@ export async function runProjectSkill(projectId: string, skillId: string) {
             return { error: 'Failed to run project analysis' };
         }
     }
+
+    if (skillId === 'pack') {
+        try {
+            // Aggregate all inputs with session context
+            const allInputs = project.sessions.flatMap(s => s.inputs.map(i => ({
+                ...i,
+                sessionTitle: s.title
+            })));
+
+            const result = await generateProjectNotebookLMPackSkill({ project, inputs: allInputs });
+            await projectService.addOutput(projectId, skillId, result.type as any, result.title || 'Project Pack', result.content as string);
+            revalidatePath(`/projects/${projectId}`);
+            return { success: true };
+        } catch (e) {
+            console.error('[runProjectSkill] Pack Error:', e);
+            return { error: 'Failed to run project pack generation' };
+        }
+    }
+
     return { error: 'Unknown skill' };
 }
 
