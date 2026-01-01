@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { addSessionInput, refineTextAction, extractFileText } from '@/app/actions';
+import { addSessionInput, refineTextAction } from '@/app/actions';
+import { extractFileText } from '@/app/file-actions';
 import { Check } from '@geist-ui/icons';
 
 type InputMode = 'text' | 'voice' | 'upload' | 'photo';
@@ -141,6 +142,13 @@ export function InputManager({ projectId, sessionId, onCancel }: { projectId: st
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // [CRITICAL] Prevent submission in generic 'upload' mode to avoid DB validation errors
+        if (mode === 'upload') {
+            alert('File not yet converted. Please select a file and wait for text extraction, or switch to Text mode.');
+            return;
+        }
+
         setIsSubmitting(true);
         const formData = new FormData();
         formData.append('title', title);
