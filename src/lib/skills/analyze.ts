@@ -29,13 +29,15 @@ export async function analyzeSessionSkill(context: SkillContext): Promise<SkillR
   `).join('\n');
 
   const systemPrompt = `
+    OUTPUT LANGUAGE: JAPANESE (日本語) ONLY.
+    
     You are an expert Analytic Engine for corporate training.
     Your goal is to normalize and structure raw inputs into two distinct categories:
     1. Structural Analysis (Objective)
     2. Reflective Application (Subjective)
 
     Output must be valid JSON with this schema.
-    IMPORTANT: All values (concepts, observation, etc.) MUST be written in Japanese (日本語).
+    IMPORTANT: All values (concepts, observation, interpretation, application, etc.) MUST be written in Japanese (日本語).
 
     {
       "objective": {
@@ -55,6 +57,8 @@ export async function analyzeSessionSkill(context: SkillContext): Promise<SkillR
     Session: ${session.title}
     Inputs:
     ${inputsText}
+
+    Task: Analyze the inputs above and output the result in JAPANESE (日本語).
   `;
 
   // Force JSON mode for reliability
