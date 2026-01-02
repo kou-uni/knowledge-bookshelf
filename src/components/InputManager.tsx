@@ -155,8 +155,8 @@ export function InputManager({ projectId, sessionId, onCancel }: { projectId: st
 
         let finalContent = content;
         if (mode === 'photo' && previewUrl) {
-            // Simulated 3-line analysis for photo
-            finalContent = `**Visual Analysis:**\n1. Detected whiteboard schematic containing flow charts.\n2. Key entities identified: "User", "Database", "API Layer".\n3. Suggests a high-level architectural discussion context.`;
+            // [MODIFIED] User requested to remove auto-generated visual analysis text.
+            finalContent = content || '';
             formData.append('imageData', previewUrl);
         }
 
