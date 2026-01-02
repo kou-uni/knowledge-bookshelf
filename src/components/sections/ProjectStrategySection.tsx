@@ -154,12 +154,6 @@ export function ProjectStrategySection({ project }: { project: Project }) {
                 {isGenerating && (
                     <div style={{ marginTop: '16px', width: '100%', height: '4px', background: 'var(--accents-2)', borderRadius: '2px', overflow: 'hidden' }}>
                         <div style={{ height: '100%', background: '#fff', width: '50%', animation: 'progress 2s infinite ease-in-out' }} />
-                        <style jsx>{`
-                            @keyframes progress {
-                                0% { transform: translateX(-100%); }
-                                100% { transform: translateX(200%); }
-                            }
-                        `}</style>
                     </div>
                 )}
             </div>
@@ -192,6 +186,10 @@ export function ProjectStrategySection({ project }: { project: Project }) {
                 structure={activeStructure}
             />
             <style jsx>{`
+                @keyframes progress {
+                    0% { transform: translateX(-100%); }
+                    100% { transform: translateX(200%); }
+                }
                 .strategy-card {
                     padding: 24px;
                     background: var(--accents-1);
