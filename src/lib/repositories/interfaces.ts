@@ -7,6 +7,7 @@ export interface IProjectRepository {
     update(id: string, updates: Partial<Project>): Promise<Project | undefined>;
     delete(id: string): Promise<boolean>;
     addOutput(projectId: string, output: SkillOutput): Promise<SkillOutput | undefined>;
+    deleteOutput(projectId: string, outputId: string): Promise<boolean>;
 }
 
 export interface ISessionRepository {
@@ -14,10 +15,11 @@ export interface ISessionRepository {
     getById(projectId: string, sessionId: string): Promise<Session | undefined>;
     create(session: Session): Promise<Session>;
     update(projectId: string, sessionId: string, updates: Partial<Session>): Promise<Session | undefined>;
-    delete(projectId: string, sessionId: string): Promise<boolean>;
+    delete(projectId: string, sessionId: string): Promise<{ success: boolean; deleted: number }>;
     addInput(projectId: string, sessionId: string, input: KnowledgeInput): Promise<KnowledgeInput | undefined>;
-    deleteInput(projectId: string, sessionId: string, inputId: string): Promise<boolean>;
+    deleteInput(projectId: string, sessionId: string, inputId: string): Promise<{ success: boolean; deleted: number }>;
     addOutput(projectId: string, sessionId: string, output: SkillOutput): Promise<SkillOutput | undefined>;
+    deleteOutput(projectId: string, sessionId: string, outputId: string): Promise<boolean>;
 }
 
 export interface ITemplateRepository {

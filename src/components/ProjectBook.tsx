@@ -2,12 +2,18 @@
 
 import Link from 'next/link';
 import { Project } from '@/lib/types';
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { deleteProjectAction } from '@/app/actions';
 
 export function ProjectBook({ project, index, hue, total }: { project: Project, index: number, hue: number, total: number }) {
     const [isHovered, setIsHovered] = useState(false);
+    const [isNavigating, setIsNavigating] = useState(false);
     const [_, startTransition] = useTransition();
+
+    // Reset navigation state on mount (fixes persistent state on back navigation)
+    useEffect(() => {
+        setIsNavigating(false);
+    }, []);
 
     const [showConfirm, setShowConfirm] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -54,9 +60,10 @@ export function ProjectBook({ project, index, hue, total }: { project: Project, 
             <Link
                 href={`/projects/${project.id}`}
                 style={{ textDecoration: 'none' }}
+                onClick={() => setIsNavigating(true)}
             >
                 <div
-                    className="book-spine"
+                    className={`book-spine ${isNavigating ? 'zen-pulse' : ''}`}
                     style={{
                         height: '350px',
                         background: `linear-gradient(90deg, 
@@ -158,6 +165,52 @@ export function ProjectBook({ project, index, hue, total }: { project: Project, 
                 .book-vanishing {
                     animation: bookVanish 0.6s ease-in forwards;
                     pointer-events: none; /* Prevent clicks during exit */
+                }
+
+                @keyframes zenPulse {
+                    0% {
+                        box-shadow: 0 0 0 0 rgba(200, 200, 200, 0);
+                        filter: brightness(1) contrast(1);
+                    }
+                    50% {
+                        box-shadow: 0 0 25px 2px rgba(200, 200, 200, 0.3); /* Greyer, softer aura */
+                        filter: brightness(1.1) contrast(1.05); /* Reduced intensity */
+                        transform: scale(1.01); /* Subtle levitation */
+                    }
+                    100% {
+                        box-shadow: 0 0 0 0 rgba(200, 200, 200, 0);
+                        filter: brightness(1) contrast(1);
+                        transform: scale(1);
+                    }
+                }
+
+                @keyframes shine {
+                    0% { background-position: 200% center; opacity: 0; }
+                    50% { opacity: 0.6; } /* Reduced from 1 */
+                    100% { background-position: -200% center; opacity: 0; }
+                }
+
+                .zen-pulse {
+                    animation: zenPulse 3s infinite ease-in-out; /* Slower breathing */
+                    z-index: 100 !important;
+                    overflow: hidden;
+                }
+
+                .zen-pulse::after {
+                    content: '';
+                    position: absolute;
+                    top: 0; left: -100%; width: 300%; height: 100%;
+                    background: linear-gradient(
+                        120deg, 
+                        transparent 30%, 
+                        rgba(220,220,220,0.1) 45%, /* Subtle silver */
+                        rgba(220,220,220,0.4) 50%, /* Peak luster */
+                        rgba(220,220,220,0.1) 55%, 
+                        transparent 70%
+                    );
+                    animation: shine 2.5s infinite linear; /* Slower sweep */
+                    pointer-events: none;
+                    transform: skewX(-20deg);
                 }
 
                 .book-spine {

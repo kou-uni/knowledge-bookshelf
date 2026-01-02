@@ -203,8 +203,8 @@ export function InputManager({ projectId, sessionId, onCancel }: { projectId: st
 
     return (
         <div className="geist-card" style={{ marginBottom: '24px', animation: 'fadeIn 0.3s ease' }}>
-            {/* TABS */}
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', paddingBottom: '12px' }}>
+            {/* TABS (Centered) */}
+            <div className="input-tabs-container" style={{ display: 'flex', gap: '8px', marginBottom: '20px', paddingBottom: '12px', justifyContent: 'center' }}>
                 <TabButton active={mode === 'text'} onClick={() => setMode('text')}>Text</TabButton>
                 <TabButton active={mode === 'voice'} onClick={() => setMode('voice')}>Voice</TabButton>
                 <TabButton active={mode === 'upload'} onClick={() => setMode('upload')}>File</TabButton>
@@ -409,7 +409,7 @@ export function InputManager({ projectId, sessionId, onCancel }: { projectId: st
 
                     <div
                         onClick={() => setIsAssignment(!isAssignment)}
-                        style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', userSelect: 'none' }}
+                        style={{ marginBottom: '24px', marginTop: '24px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', userSelect: 'none' }}
                     >
                         <div style={{
                             width: '20px', height: '20px',

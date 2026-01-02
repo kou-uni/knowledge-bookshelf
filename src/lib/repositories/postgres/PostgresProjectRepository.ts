@@ -103,14 +103,22 @@ export class PostgresProjectRepository implements IProjectRepository {
     }
 
     async addOutput(projectId: string, output: SkillOutput): Promise<SkillOutput | undefined> {
-        // Ensure we overwrite previous output for this skill (avoid stale data)
-        await sql`DELETE FROM outputs WHERE scope_type = 'PROJECT' AND scope_id = ${projectId} AND skill_id = ${output.skillId}`;
+        // For singleton skills (like analysis), overwrite. For artifacts (packs), append.
+        const singletonSkills = ['analyze', 'summarize', 'refine'];
+        if (singletonSkills.includes(output.skillId)) {
+            await sql`DELETE FROM outputs WHERE scope_type = 'PROJECT' AND scope_id = ${projectId} AND skill_id = ${output.skillId}`;
+        }
 
         await sql`
             INSERT INTO outputs (id, scope_id, scope_type, skill_id, type, title, content, configuration, created_at)
             VALUES (${output.id}, ${projectId}, 'PROJECT', ${output.skillId}, ${output.type}, ${output.title}, ${JSON.stringify(output.content) as any}, ${JSON.stringify(output.metadata || {}) as any}, ${output.createdAt})
         `;
         return output;
+    }
+
+    async deleteOutput(projectId: string, outputId: string): Promise<boolean> {
+        await sql`DELETE FROM outputs WHERE scope_type = 'PROJECT' AND scope_id = ${projectId} AND id = ${outputId}`;
+        return true;
     }
 
     // --- Mappers ---

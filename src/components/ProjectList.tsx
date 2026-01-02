@@ -16,67 +16,23 @@ export function ProjectList({ projects }: { projects: Project[] }) {
     return (
         <div className="font-geist">
             {/* HERO SECTION: Library Background */}
-            <div style={{
-                position: 'relative',
-                height: '500px',
-                width: '100vw',
-                marginLeft: 'calc(50% - 50vw)',
-                marginTop: '-80px',
-                marginBottom: '20px',
-                backgroundImage: 'url(/library-bg.png)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundColor: '#111', // Fallback
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center'
-            }}>
-                <div style={{
-                    position: 'absolute',
-                    top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(0,0,0,0.5)',
-                    backdropFilter: 'blur(3px)'
-                }}></div>
+            <div className="hero-container">
+                <div className="hero-overlay"></div>
 
                 <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 20px', marginTop: '40px' }}>
-                    {/* Icon: Antique Book (Simple) */}
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ margin: '0 auto 24px auto', opacity: 0.9, color: '#d4cdc5' }}>
-                        <path d="M5 4C5 2.89543 5.89543 2 7 2H19C19.5523 2 20 2.44772 20 3V19C20 19.5523 19.5523 20 19 20H7C5.89543 20 5 19.1046 5 18V4Z" stroke="currentColor" strokeWidth="1" />
-                        <path d="M5 4H7V20H5V4Z" fill="currentColor" fillOpacity="0.2" />
-                        <line x1="5" y1="7" x2="7" y2="7" stroke="currentColor" strokeWidth="1" />
-                        <line x1="5" y1="11" x2="7" y2="11" stroke="currentColor" strokeWidth="1" />
-                        <line x1="5" y1="15" x2="7" y2="15" stroke="currentColor" strokeWidth="1" />
-                        <line x1="16" y1="2" x2="16" y2="20" stroke="currentColor" strokeWidth="0.5" />
-                    </svg>
+                    {/* Icon Removed as per User Request */}
 
-                    <h1 style={{
-                        fontSize: '6rem',
-                        fontWeight: 100,
-                        color: '#fff',
-                        textShadow: '0 10px 30px rgba(0,0,0,0.8)',
-                        marginBottom: '10px',
-                        letterSpacing: '-0.06em',
-                        lineHeight: 1
-                    }}>
+                    <h1 className="hero-title">
                         Bookshelf
                     </h1>
-                    <p style={{
-                        fontSize: '1.4rem',
-                        fontWeight: 200,
-                        color: 'rgba(255,255,255,0.9)',
-                        maxWidth: '700px',
-                        margin: '0 auto',
-                        textShadow: '0 2px 10px rgba(0,0,0,1)',
-                        letterSpacing: '0.05em'
-                    }}>
-                        A Knowledge Factory for Corporate Intelligence
+                    <p className="hero-subtitle">
+                        Crystallize Your Experience into Wisdom
                     </p>
                 </div>
             </div>
 
             {/* BOOKSHELF / COLLECTION */}
-            <div style={{ padding: '0 20px', maxWidth: '1200px', margin: '0 auto' }}>
+            <div style={{ padding: '0 20px', maxWidth: '1200px', margin: '0 auto', minHeight: 'calc(100vh - 350px)', position: 'relative', paddingBottom: '60px' }}>
 
                 {/* Helper text & Action */}
                 <div style={{ marginBottom: '60px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -159,22 +115,102 @@ export function ProjectList({ projects }: { projects: Project[] }) {
                     {/* Shelf Board */}
                     <div className="shelf-board"></div>
                 </div>
+
+                {/* FOOTER */}
+                <div style={{
+                    marginTop: '40px',
+                    borderTop: '1px solid #333',
+                    paddingTop: '20px',
+                    textAlign: 'center',
+                    color: '#666',
+                    fontSize: '0.8rem',
+                    fontFamily: 'var(--font-geist-mono)',
+                    letterSpacing: '0.1em'
+                }}>
+                    powered by uni**
+                </div>
             </div>
 
             <style jsx>{`
         .bookshelf {
             margin-top: 20px;
         }
+
+        /* HERO STYLES */
+        .hero-container {
+            position: relative;
+            height: 500px;
+            width: 100vw;
+            margin-left: calc(50% - 50vw);
+            margin-top: -80px;
+            margin-bottom: 20px;
+            background-image: url(/library-bg.png);
+            background-size: cover;
+            background-position: center;
+            background-color: #111;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: height 0.3s ease;
+        }
+        .hero-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
+        }
+        .hero-title {
+            font-size: 6rem;
+            font-weight: 100;
+            color: #fff;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            margin-bottom: 10px;
+            letter-spacing: -0.06em;
+            line-height: 1;
+        }
+        .hero-subtitle {
+            font-size: 1.4rem;
+            font-weight: 200;
+            color: rgba(255,255,255,0.9);
+            max-width: 700px;
+            margin: 0 auto;
+            text-shadow: 0 2px 10px rgba(0,0,0,1);
+            letter-spacing: 0.05em;
+        }
+
+        /* IPHONE 16 / MOBILE OPTIMIZATION */
+        @media (max-width: 600px) {
+            .hero-container {
+                height: 200px; /* Reduced to user preference */
+            }
+            .hero-title {
+                font-size: clamp(2.5rem, 10vw, 3rem); /* Fluid scaling for narrow <360px */
+            }
+            .hero-subtitle {
+                font-size: clamp(0.8rem, 3vw, 0.9rem);
+                max-width: 90%;
+            }
+            .shelf-row {
+                padding: 0 max(20px, 12vw); /* Elastic padding: never less than 20px, scales with width */
+                gap: clamp(16px, 4vw, 24px); /* Fluid gap */
+                scroll-snap-type: x mandatory; 
+                justify-content: flex-start; 
+            }
+            .shelf-row > :global(*) {
+                scroll-snap-align: center;
+            }
+        }
         
         .shelf-row {
             display: flex;
-            align-items: flex-start; /* Fix "Staircase" bug by anchoring to top */
-            justify-content: center; /* Center books */
+            align-items: flex-start; 
+            justify-content: center; 
             gap: 12px;
             padding: 0 40px;
-            height: 350px; /* Fixed height instead of min-height */
+            height: 350px; 
             overflow-x: auto;
-            scrollbar-width: none; /* Hide scrollbar */
+            scrollbar-width: none; 
         }
 
         .shelf-board {
@@ -189,20 +225,20 @@ export function ProjectList({ projects }: { projects: Project[] }) {
         }
 
         .book-spine {
-            width: 72px; /* Slight width increase */
+            width: 72px; 
             border-radius: 3px 6px 6px 3px;
-            background: #1a1a1a; /* Fallback */
-            color: #d4cdc5; /* Antique Paper Text Color */
+            background: #1a1a1a; 
+            color: #d4cdc5; 
             box-shadow: 
-                inset 2px 0 5px rgba(0,0,0,0.8), /* Spine shadow */
-                inset -1px 0 2px rgba(255,255,255,0.1), /* Highlight */
-                -5px 0 10px rgba(0,0,0,0.5); /* Drop shadow */
-            display: block; /* Use Block for Absolute children */
+                inset 2px 0 5px rgba(0,0,0,0.8), 
+                inset -1px 0 2px rgba(255,255,255,0.1), 
+                -5px 0 10px rgba(0,0,0,0.5); 
+            display: block; 
             text-decoration: none;
             transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             cursor: pointer;
-            position: relative; /* Anchor for absolute children */
-            border-left: 4px solid rgba(0,0,0,0.2); /* Deep spine ridge */
+            position: relative; 
+            border-left: 4px solid rgba(0,0,0,0.2); 
             overflow: hidden;
         }
 
@@ -240,8 +276,8 @@ export function ProjectList({ projects }: { projects: Project[] }) {
             text-shadow: 0 1px 2px rgba(0,0,0,0.8);
             padding: 10px 0;
             display: flex;
-            align-items: center; /* Horizontally center */
-            justify-content: flex-start; /* Vertically align to top */
+            align-items: center; 
+            justify-content: flex-start; 
         }
 
         .spine-footer {

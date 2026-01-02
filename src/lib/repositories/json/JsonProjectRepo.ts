@@ -56,8 +56,26 @@ export class JsonProjectRepo implements IProjectRepository {
         if (!store.projects[index].outputs) {
             store.projects[index].outputs = [];
         }
-        store.projects[index].outputs.push(output);
+        store.projects[index].outputs!.push(output);
         await this.adapter.writeStore(store);
         return output;
+    }
+
+    async deleteOutput(projectId: string, outputId: string): Promise<boolean> {
+        const store = await this.adapter.readStore();
+        const index = store.projects.findIndex(p => p.id === projectId);
+        if (index === -1) return false;
+
+        const project = store.projects[index];
+        if (!project.outputs) return false;
+
+        const initialLength = project.outputs.length;
+        project.outputs = project.outputs.filter(o => o.id !== outputId);
+
+        if (project.outputs.length !== initialLength) {
+            await this.adapter.writeStore(store);
+            return true;
+        }
+        return false;
     }
 }

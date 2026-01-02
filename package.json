@@ -19,15 +19,22 @@
     "pptxgenjs": "^4.0.1",
     "react": "^18",
     "react-dom": "^18",
-    "react-markdown": "^10.1.0"
+    "react-markdown": "^10.1.0",
+    "zod": "^4.3.4"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@vitejs/plugin-react": "^5.1.2",
     "eslint": "^8",
     "eslint-config-next": "13.5.6",
+    "happy-dom": "^20.0.11",
+    "jsdom": "^27.4.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.16"
   }
 }

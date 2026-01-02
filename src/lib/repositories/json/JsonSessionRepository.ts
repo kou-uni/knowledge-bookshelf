@@ -44,10 +44,10 @@ export class JsonSessionRepository implements ISessionRepository {
         return session;
     }
 
-    async delete(projectId: string, sessionId: string): Promise<boolean> {
+    async delete(projectId: string, sessionId: string): Promise<{ success: boolean; deleted: number }> {
         const store = await this.adapter.readStore();
         const project = store.projects.find(p => p.id === projectId);
-        if (!project) return false;
+        if (!project) return { success: false, deleted: 0 };
 
         const initialLength = project.sessions.length;
         project.sessions = project.sessions.filter(s => s.id !== sessionId);
@@ -61,9 +61,9 @@ export class JsonSessionRepository implements ISessionRepository {
                 }
             });
             await this.adapter.writeStore(store);
-            return true;
+            return { success: true, deleted: 1 };
         }
-        return false;
+        return { success: false, deleted: 0 };
     }
 
     async addInput(projectId: string, sessionId: string, input: KnowledgeInput): Promise<KnowledgeInput | undefined> {
@@ -79,17 +79,22 @@ export class JsonSessionRepository implements ISessionRepository {
         return input;
     }
 
-    async deleteInput(projectId: string, sessionId: string, inputId: string): Promise<boolean> {
+    async deleteInput(projectId: string, sessionId: string, inputId: string): Promise<{ success: boolean; deleted: number }> {
         const store = await this.adapter.readStore();
         const project = store.projects.find(p => p.id === projectId);
-        if (!project) return false;
+        if (!project) return { success: false, deleted: 0 };
 
         const session = project.sessions.find(s => s.id === sessionId);
-        if (!session) return false;
+        if (!session) return { success: false, deleted: 0 };
 
+        const initialLength = session.inputs.length;
         session.inputs = session.inputs.filter(i => i.id !== inputId);
-        await this.adapter.writeStore(store);
-        return true;
+
+        if (session.inputs.length !== initialLength) {
+            await this.adapter.writeStore(store);
+            return { success: true, deleted: 1 };
+        }
+        return { success: false, deleted: 0 };
     }
 
     async addOutput(projectId: string, sessionId: string, output: SkillOutput): Promise<SkillOutput | undefined> {
@@ -103,5 +108,23 @@ export class JsonSessionRepository implements ISessionRepository {
         session.outputs.push(output);
         await this.adapter.writeStore(store);
         return output;
+    }
+
+    async deleteOutput(projectId: string, sessionId: string, outputId: string): Promise<boolean> {
+        const store = await this.adapter.readStore();
+        const project = store.projects.find(p => p.id === projectId);
+        if (!project) return false;
+
+        const session = project.sessions.find(s => s.id === sessionId);
+        if (!session) return false;
+
+        const initialLength = session.outputs.length;
+        session.outputs = session.outputs.filter(o => o.id !== outputId);
+
+        if (session.outputs.length !== initialLength) {
+            await this.adapter.writeStore(store);
+            return true;
+        }
+        return false;
     }
 }

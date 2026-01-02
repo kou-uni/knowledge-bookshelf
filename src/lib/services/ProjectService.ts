@@ -74,4 +74,8 @@ export class ProjectService {
         // Use repository method which handles persistence and overwriting
         return this.projectRepo.addOutput(projectId, newOutput);
     }
+
+    async deleteOutput(projectId: string, outputId: string): Promise<boolean> {
+        return this.projectRepo.deleteOutput(projectId, outputId);
+    }
 }

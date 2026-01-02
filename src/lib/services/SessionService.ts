@@ -29,7 +29,7 @@ export class SessionService {
         return this.sessionRepo.create(newSession);
     }
 
-    async deleteSession(projectId: string, sessionId: string): Promise<boolean> {
+    async deleteSession(projectId: string, sessionId: string): Promise<{ success: boolean; deleted: number }> {
         return this.sessionRepo.delete(projectId, sessionId);
     }
 
@@ -51,7 +51,7 @@ export class SessionService {
         return this.sessionRepo.addInput(projectId, sessionId, newInput);
     }
 
-    async deleteInput(projectId: string, sessionId: string, inputId: string): Promise<boolean> {
+    async deleteInput(projectId: string, sessionId: string, inputId: string): Promise<{ success: boolean; deleted: number }> {
         return this.sessionRepo.deleteInput(projectId, sessionId, inputId);
     }
 
@@ -66,5 +66,9 @@ export class SessionService {
             createdAt: new Date().toISOString()
         };
         return this.sessionRepo.addOutput(projectId, sessionId, newOutput);
+    }
+
+    async deleteOutput(projectId: string, sessionId: string, outputId: string): Promise<boolean> {
+        return this.sessionRepo.deleteOutput(projectId, sessionId, outputId);
     }
 }

@@ -117,9 +117,18 @@ export class PostgresSessionRepository implements ISessionRepository {
         return this.getById(projectId, sessionId);
     }
 
-    async delete(projectId: string, sessionId: string): Promise<boolean> {
-        await sql`DELETE FROM sessions WHERE id = ${sessionId}`;
-        return true;
+    async delete(projectId: string, sessionId: string): Promise<{ success: boolean; deleted: number }> {
+        console.log(`[Repo] Deleting session ${sessionId} for project ${projectId}`);
+        // Manually cascade delete to ensure safety regardless of DB constraints
+        const resultK = await sql`DELETE FROM knowledge_items WHERE session_id = ${sessionId}`;
+        console.log(`[Repo] Deleted ${resultK.rowCount} knowledge items`);
+        const resultO = await sql`DELETE FROM outputs WHERE scope_type = 'SESSION' AND scope_id = ${sessionId}`;
+        console.log(`[Repo] Deleted ${resultO.rowCount} outputs`);
+        const resultI = await sql`DELETE FROM inputs WHERE session_id = ${sessionId}`;
+        console.log(`[Repo] Deleted ${resultI.rowCount} inputs`);
+        const resultS = await sql`DELETE FROM sessions WHERE id = ${sessionId}`;
+        console.log(`[Repo] Deleted ${resultS.rowCount} sessions`);
+        return { success: true, deleted: resultS.rowCount || 0 };
     }
 
     async addInput(projectId: string, sessionId: string, input: KnowledgeInput): Promise<KnowledgeInput | undefined> {
@@ -130,20 +139,32 @@ export class PostgresSessionRepository implements ISessionRepository {
         return input;
     }
 
-    async deleteInput(projectId: string, sessionId: string, inputId: string): Promise<boolean> {
-        await sql`DELETE FROM inputs WHERE id = ${inputId}`;
-        return true;
+    async deleteInput(projectId: string, sessionId: string, inputId: string): Promise<{ success: boolean; deleted: number }> {
+        console.log(`[Repo] Deleting input ${inputId} for session ${sessionId}`);
+        const resultK = await sql`DELETE FROM knowledge_items WHERE source_input_id = ${inputId}`;
+        console.log(`[Repo] Deleted ${resultK.rowCount} knowledge items`);
+        const resultI = await sql`DELETE FROM inputs WHERE id = ${inputId}`;
+        console.log(`[Repo] Deleted ${resultI.rowCount} inputs`);
+        return { success: true, deleted: resultI.rowCount || 0 };
     }
 
     async addOutput(projectId: string, sessionId: string, output: SkillOutput): Promise<SkillOutput | undefined> {
-        // Ensure we overwrite previous output for this skill (avoid stale data)
-        await sql`DELETE FROM outputs WHERE scope_id = ${sessionId} AND skill_id = ${output.skillId}`;
+        // For singleton skills (like analysis), overwrite. For artifacts (packs), append.
+        const singletonSkills = ['analyze', 'summarize', 'refine'];
+        if (singletonSkills.includes(output.skillId)) {
+            await sql`DELETE FROM outputs WHERE scope_id = ${sessionId} AND skill_id = ${output.skillId}`;
+        }
 
         await sql`
             INSERT INTO outputs (id, scope_id, scope_type, skill_id, type, title, content, configuration, created_at)
             VALUES (${output.id}, ${sessionId}, 'SESSION', ${output.skillId}, ${output.type}, ${output.title}, ${JSON.stringify(output.content) as any}, ${JSON.stringify(output.metadata || {}) as any}, ${output.createdAt})
         `;
         return output;
+    }
+
+    async deleteOutput(projectId: string, sessionId: string, outputId: string): Promise<boolean> {
+        await sql`DELETE FROM outputs WHERE scope_type = 'SESSION' AND scope_id = ${sessionId} AND id = ${outputId}`;
+        return true;
     }
 
     // --- Mappers ---

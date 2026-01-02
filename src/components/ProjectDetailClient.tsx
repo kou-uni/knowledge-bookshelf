@@ -2,19 +2,21 @@
 
 import { Project, SkillOutput } from '@/lib/types';
 import Link from 'next/link';
-import { createSessionAction, deleteSessionAction, updateProjectAction, updateSessionAction, runProjectSkill } from '@/app/actions';
-import { useTransition, useState, useEffect, useRef } from 'react';
+import { createSessionAction, deleteSessionAction, updateProjectAction, updateSessionAction } from '@/app/actions';
+import { useTransition, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { InlineTextEdit } from './InlineTextEdit';
-import { BarChart2, PieChart, Activity, Package, Layout, Monitor, Share, Download, Archive, Check, Clipboard } from '@geist-ui/icons';
-import ReactMarkdown from 'react-markdown';
+import { NavButton } from '@/components/ui';
+import { ProjectStrategySection, ProjectAnalyticsSection } from '@/components/sections';
+import { Archive } from '@geist-ui/icons';
 
 export function ProjectDetailClient({ project }: { project: Project }) {
     const [isPending, startTransition] = useTransition();
 
     const handleCreateSession = () => {
         startTransition(async () => {
-            await createSessionAction(project.id);
+            const result = await createSessionAction(project.id);
+            if (!result.success) alert(result.error);
         });
     };
 
@@ -24,7 +26,8 @@ export function ProjectDetailClient({ project }: { project: Project }) {
         // Native confirm kept for SessionTile for now, or can be upgraded later.
         if (confirm("Delete this session?")) {
             startTransition(async () => {
-                await deleteSessionAction(project.id, sessionId);
+                const result = await deleteSessionAction(project.id, sessionId);
+                if (!result.success) alert(result.error);
             });
         }
     };
@@ -47,7 +50,10 @@ export function ProjectDetailClient({ project }: { project: Project }) {
                 <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'flex-start' }}>
                     <InlineTextEdit
                         initialValue={project.title}
-                        onSave={async (val) => { await updateProjectAction(project.id, { title: val }) }}
+                        onSave={async (val) => {
+                            const result = await updateProjectAction(project.id, { title: val });
+                            if (!result.success) alert(result.error);
+                        }}
                         className="variant-hero"
                         placeholder="Project Title"
                         containerStyle={{ width: '100%', justifyContent: 'flex-start' }}
@@ -55,7 +61,7 @@ export function ProjectDetailClient({ project }: { project: Project }) {
                     />
                 </div>
                 <div style={{ display: 'flex', gap: '16px', alignItems: 'center', justifyContent: 'flex-start' }}>
-                    <span style={{ color: 'var(--accents-5)', fontWeight: 600, fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                    <span suppressHydrationWarning style={{ color: 'var(--accents-5)', fontWeight: 600, fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
                         STARTED {new Date(project.createdAt).toLocaleDateString()}
                     </span>
                     <span style={{ color: 'var(--accents-5)', opacity: 0.5 }}>|</span>
@@ -137,12 +143,92 @@ export function ProjectDetailClient({ project }: { project: Project }) {
                 <ProjectStrategySection project={project} />
             </div>
 
+
             <style jsx global>{`
                 .glass-dock {
                     backdrop-filter: blur(20px);
                     background: rgba(255,255,255,0.7);
                     border: 1px solid var(--accents-2);
                     box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);
+                }
+
+                @keyframes zenPulse {
+                    0% { opacity: 1; filter: brightness(1); border-color: var(--accents-2); }
+                    50% { opacity: 0.7; filter: brightness(1.2); border-color: var(--accents-5); }
+                    100% { opacity: 1; filter: brightness(1); border-color: var(--accents-2); }
+                }
+
+                .zen-pulse {
+                    animation: zenPulse 2s infinite ease-in-out;
+                    pointer-events: none;
+                }
+
+                /* MOBILE OPTIMIZATION */
+                @media (max-width: 600px) {
+                    /* Container padding reduce */
+                    .geist-container {
+                        padding: 40px 20px !important;
+                    }
+
+                    /* Hero Text */
+                    input.variant-hero {
+                        font-size: 2.5rem !important; /* Smaller title */
+                    }
+                    
+                    /* Navigation Dock (Fit to Screen) */
+                    .glass-dock {
+                        width: 95% !important; /* Slightly narrower than full screen */
+                        gap: 4px !important; /* Tight gap */
+                        padding: 6px !important;
+                        top: 10px !important;
+                        justify-content: space-between !important;
+                    }
+                    .glass-dock button {
+                        padding: 8px 12px !important; /* Tighter padding */
+                        font-size: 0.7rem !important; /* Small text */
+                        flex: 1; /* Distribute space */
+                    }
+
+                    /* Session Tile Mobile Layout */
+                    .session-tile {
+                        flex-direction: column !important;
+                        align-items: flex-start !important;
+                        padding: 20px !important;
+                        gap: 16px !important;
+                    }
+                    .session-tile-left {
+                        width: 100%;
+                        display: flex;
+                        align-items: center;
+                        gap: 16px;
+                    }
+                    .session-number {
+                        margin-right: 0 !important;
+                        width: 40px !important; 
+                        height: 40px !important;
+                        font-size: 0.9rem !important;
+                    }
+                    .session-main-content {
+                        width: 100%;
+                        gap: 12px !important;
+                    }
+                    .session-prefix {
+                        font-size: 1.5rem !important; /* Smaller header */
+                    }
+                    .session-meta-row {
+                        flex-direction: row; /* Keep date next to inputs if possible, or stack */
+                        justify-content: space-between;
+                        width: 100%;
+                        align-items: center;
+                        margin-top: 8px;
+                    }
+                    
+                    /* Hide/Move Delete Button */
+                    .session-delete-btn {
+                        position: absolute;
+                        top: 16px;
+                        right: 16px;
+                    }
                 }
             `}</style>
         </main>
@@ -151,6 +237,7 @@ export function ProjectDetailClient({ project }: { project: Project }) {
 
 function SessionTile({ session, projectId, onDelete }: { session: any, projectId: string, onDelete: any }) {
     const router = useRouter();
+    const [isNavigating, setIsNavigating] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
 
     const handleNavigation = (e: React.MouseEvent) => {
@@ -158,6 +245,7 @@ function SessionTile({ session, projectId, onDelete }: { session: any, projectId
         if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'BUTTON') {
             return;
         }
+        setIsNavigating(true);
         router.push(`/projects/${projectId}/sessions/${session.id}`);
     };
 
@@ -170,11 +258,13 @@ function SessionTile({ session, projectId, onDelete }: { session: any, projectId
 
     const handleTitleSave = async (newVal: string) => {
         const fullTitle = newVal ? `${sessionPrefix}: ${newVal}` : sessionPrefix;
-        await updateSessionAction(projectId, session.id, { title: fullTitle });
+        const result = await updateSessionAction(projectId, session.id, { title: fullTitle });
+        if (!result.success) alert(result.error);
     };
 
     const handleDateSave = async (newVal: string) => {
-        await updateSessionAction(projectId, session.id, { date: newVal });
+        const result = await updateSessionAction(projectId, session.id, { date: newVal });
+        if (!result.success) alert(result.error);
     };
 
     return (
@@ -182,7 +272,7 @@ function SessionTile({ session, projectId, onDelete }: { session: any, projectId
             onClick={handleNavigation}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            className="geist-card"
+            className={`geist-card session-tile ${isNavigating ? 'zen-pulse' : ''}`}
             style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -197,8 +287,10 @@ function SessionTile({ session, projectId, onDelete }: { session: any, projectId
                 backgroundColor: isHovered ? 'rgba(255,255,255,0.03)' : 'transparent'
             }}
         >
-            <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                <div style={{
+            <div className="session-main-content" style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+
+                {/* Mobile: Row 1 (Number) */}
+                <div className="session-number" style={{
                     width: '48px', height: '48px',
                     borderRadius: '50%',
                     border: '1px solid var(--accents-2)',
@@ -211,18 +303,13 @@ function SessionTile({ session, projectId, onDelete }: { session: any, projectId
                     {session.sessionNumber}
                 </div>
 
-                <div style={{ flex: 1, display: 'flex', gap: '32px', alignItems: 'center' }}>
-                    {/* LEFT COL: Session Number Prefix */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {/* Prefix & Name */}
                     <div>
-                        <span style={{ fontSize: '2rem', fontWeight: 100, letterSpacing: '-0.03em', color: '#fff', whiteSpace: 'nowrap', lineHeight: '1' }}>
+                        <span className="session-prefix" style={{ fontSize: '2rem', fontWeight: 100, letterSpacing: '-0.03em', color: '#fff', whiteSpace: 'nowrap', lineHeight: '1' }}>
                             {sessionPrefix}
                         </span>
-                    </div>
-
-                    {/* MIDDLE COL: content (Name + Date) */}
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                        {/* Custom Name */}
-                        <div style={{ marginBottom: '8px' }} onClick={(e) => e.stopPropagation()}>
+                        <div style={{ marginTop: '4px' }} onClick={(e) => e.stopPropagation()}>
                             <InlineTextEdit
                                 initialValue={customTitle}
                                 onSave={handleTitleSave}
@@ -230,34 +317,32 @@ function SessionTile({ session, projectId, onDelete }: { session: any, projectId
                                 style={{ fontSize: '1rem', fontWeight: 400, letterSpacing: '-0.01em', color: '#fff', width: '100%' }}
                             />
                         </div>
+                    </div>
 
-                        {/* Date Input */}
+                    {/* Meta Row (Date + metrics) */}
+                    <div className="session-meta-row" style={{ display: 'flex', alignItems: 'center', gap: '24px', marginTop: '8px' }}>
                         <div
                             onClick={(e) => e.stopPropagation()}
-                            style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                         >
-                            <span style={{ fontSize: '0.75rem', color: 'var(--accents-5)', fontWeight: 600, letterSpacing: '0.05em' }}>DATE</span>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--accents-5)', fontWeight: 600, letterSpacing: '0.05em' }}>DATE</span>
                             <InlineTextEdit
                                 initialValue={session.date || ''}
                                 onSave={handleDateSave}
                                 placeholder="YYYY.MM.DD"
                                 type="text"
-                                style={{ fontSize: '0.875rem', color: 'var(--accents-5)', width: '120px', textAlign: 'center' }}
+                                style={{ fontSize: '0.8rem', color: 'var(--accents-5)', width: '100px' }}
                             />
                         </div>
-                    </div>
 
-                    {/* RIGHT COL: Meta */}
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--accents-5)', fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase', textAlign: 'right' }}>
-                            {session.inputs.length} INPUTS<br />
-                            {session.outputs.length} OUTPUTS
+                        <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--accents-5)', fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                            {session.inputs.length} IN / {session.outputs.length} OUT
                         </p>
                     </div>
                 </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', zIndex: 5 }}>
+            <div className="session-delete-btn" style={{ display: 'flex', alignItems: 'center', gap: '16px', zIndex: 5 }}>
                 <button
                     onClick={(e) => onDelete(e, session.id)}
                     className="geist-btn secondary"
@@ -280,586 +365,27 @@ function SessionTile({ session, projectId, onDelete }: { session: any, projectId
     );
 }
 
-function NavButton({ label, targetId }: { label: string, targetId: string }) {
-    return (
-        <button
-            onClick={() => document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth' })}
-            style={{
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '0.75rem',
-                fontWeight: 400,
-                color: 'var(--accents-6)',
-                padding: '8px 20px',
-                borderRadius: '999px',
-                letterSpacing: '0.05em',
-                transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-                e.currentTarget.style.color = '#000';
-                e.currentTarget.style.background = 'rgba(0,0,0,0.05)';
-            }}
-            onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'var(--accents-6)';
-                e.currentTarget.style.background = 'transparent';
-            }}
-        >
-            {label}
-        </button>
-    )
-}
 
 
 
-function ProjectAnalyticsSection({ project }: { project: Project }) {
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const totalInputs = project.sessions.reduce((acc, s) => acc + s.inputs.length, 0);
-
-
-    // Find project-level analysis output (skillId 'analyze')
-    // Project outputs are stored in `project.outputs`
-    const analysisOutput = project.outputs?.find((o: SkillOutput) => o.skillId === 'analyze');
-
-    const handleAnalyze = async () => {
-        setIsAnalyzing(true);
-        // Skeleton Law: visible flicker
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        const result = await runProjectSkill(project.id, 'analyze');
-        if (result && result.error) {
-            alert(`Analysis Failed: ${result.error}`);
-        }
-        setIsAnalyzing(false);
-    };
-
-    return (
-        <div style={{ marginBottom: '40px' }}>
-            <h2 style={{ fontSize: '2rem', fontWeight: 200, marginBottom: '40px', borderBottom: '1px solid var(--accents-2)', paddingBottom: '20px' }}>Project Analytics</h2>
 
 
 
-            {/* Structural Analysis */}
-            <section style={{ borderTop: '1px solid var(--accents-2)', paddingTop: '60px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
-                    <h2 className="variant-section" style={{ fontSize: '1.5rem', fontWeight: 200 }}>Structural Analysis</h2>
-                    <button
-                        onClick={handleAnalyze}
-                        disabled={isAnalyzing || totalInputs === 0}
-                        className="geist-btn"
-                        style={{
-                            background: 'transparent',
-                            color: 'var(--accents-5)',
-                            border: '1px solid var(--accents-2)',
-                            padding: '0 32px',
-                            height: '40px',
-                            borderRadius: '999px',
-                            fontSize: '0.8rem',
-                            letterSpacing: '0.05em',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.color = '#fff';
-                            e.currentTarget.style.borderColor = '#fff';
-                            e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.color = 'var(--accents-5)';
-                            e.currentTarget.style.borderColor = 'var(--accents-2)';
-                            e.currentTarget.style.background = 'transparent';
-                        }}
-                    >
-                        {isAnalyzing ? 'ANALYZING...' : 'RUN ANALYSIS'}
-                    </button>
-                </div>
 
-                {isAnalyzing && <SkeletonScreen />}
 
-                {!isAnalyzing && analysisOutput && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '40px', animation: 'fadeIn 0.5s ease' }}>
-                        {/* OBJECTIVE SECTION */}
-                        <div className="geist-card" style={{ padding: '40px', border: '1px solid var(--accents-2)', borderRadius: '8px' }}>
-                            <h3 style={{
-                                fontSize: '0.875rem',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.1em',
-                                color: 'var(--accents-5)',
-                                marginBottom: '24px',
-                                borderBottom: '1px solid var(--accents-2)',
-                                paddingBottom: '12px',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center'
-                            }}>
-                                <span>Objective Analysis</span>
-                                <CopyButton text={formatObjectiveContent(analysisOutput.content as string)} />
-                            </h3>
-                            <div style={{ fontSize: '1rem', lineHeight: '1.8' }}>
-                                <AnalysisViewer content={analysisOutput.content as string} />
-                            </div>
-                        </div>
 
-                        {/* SUBJECTIVE SECTION */}
-                        <div className="geist-card" style={{ padding: '40px', border: '1px solid var(--accents-2)', borderRadius: '8px' }}>
-                            <h3 style={{
-                                fontSize: '0.875rem',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.1em',
-                                color: 'var(--accents-5)',
-                                marginBottom: '24px',
-                                borderBottom: '1px solid var(--accents-2)',
-                                paddingBottom: '12px',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center'
-                            }}>
-                                <span>Subjective Synthesis</span>
-                                <CopyButton text="Reflective synthesis based on the objective structures identified above. (Integration pending)" />
-                            </h3>
-                            <div style={{ fontSize: '1rem', lineHeight: '1.8', color: 'var(--accents-6)' }}>
-                                <SubjectiveViewer content={analysisOutput.content as string | object} />
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </section>
-        </div>
-    )
-}
 
-import PresentationGenerator from './PresentationGenerator';
 
-function ProjectStrategySection({ project }: { project: Project }) {
-    const [strategy, setStrategy] = useState<'presentation' | 'document' | 'pack'>('pack');
-    const [activeAudience, setActiveAudience] = useState('Public');
-    const [activeStructure, setActiveStructure] = useState('Strategic');
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [showPresentationModal, setShowPresentationModal] = useState(false);
 
-    // Filter real artifacts from project outputs
-    const artifacts = project.outputs?.filter((o: SkillOutput) => o.skillId === 'pack' || o.type === 'pack' || o.type === 'presentation' || o.skillId === 'ppt').sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) || [];
 
-    const handleGenerate = async () => {
-        if (strategy === 'presentation') {
-            setShowPresentationModal(true);
-            return;
-        }
 
-        if (strategy !== 'pack') return;
-        setIsGenerating(true);
-        // ... (existing pack logic)
 
-        try {
-            // Pass options to project skill
-            const result = await runProjectSkill(project.id, 'pack', {
-                audience: activeAudience,
-                structure: activeStructure
-            });
-            if (result && result.error) {
-                alert(`Generation Failed: ${result.error}`);
-            }
-        } catch (e) {
-            console.error(e);
-            alert('Failed to generate project pack');
-        } finally {
-            setIsGenerating(false);
-        }
-    };
 
-    const handleDownload = (artifact: SkillOutput) => {
-        const blob = new Blob([artifact.content as string], { type: 'text/markdown' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${artifact.title}.md`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    };
 
-    const handleShare = async (artifact: SkillOutput) => {
-        if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: artifact.title,
-                    text: artifact.content as string,
-                });
-            } catch (err) {
-                console.log('Error sharing:', err);
-            }
-        } else {
-            // Fallback to copy content
-            navigator.clipboard.writeText(artifact.content as string);
-            alert('Content copied to clipboard for NotebookLM!');
-        }
-    };
 
-    return (
-        <div>
-            <h2 style={{ fontSize: '2rem', fontWeight: 200, marginBottom: '40px', borderBottom: '1px solid var(--accents-2)', paddingBottom: '20px' }}>Strategy & Crystallization</h2>
 
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '32px', justifyContent: 'center' }}>
-                <StrategyCard active={strategy === 'pack'} onClick={() => setStrategy('pack')} label="Knowledge Pack" icon={<Package />} />
-            </div>
 
-            {/* CONTEXT PARAMETERS (Always visible) */}
-            <div style={{ marginBottom: '32px' }}>
-                <div className="geist-card" style={{ padding: '24px', background: 'var(--accents-1)', border: 'none', borderRadius: '8px' }}>
-                    <div style={{ display: 'flex', gap: '48px', alignItems: 'flex-start', flexWrap: 'nowrap' }}>
-                        <div style={{ flex: 1 }}>
-                            <label style={{ display: 'block', marginBottom: '12px', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--accents-5)', textAlign: 'center' }}>Target Audience</label>
-                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                                {['Executive', 'Public', 'Self'].map(audience => (
-                                    <ContextKnob
-                                        key={audience}
-                                        label={audience}
-                                        active={activeAudience === audience}
-                                        onClick={() => setActiveAudience(audience)}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                        <div style={{ width: '1px', background: 'var(--accents-2)', alignSelf: 'stretch' }} />
-                        <div style={{ flex: 1 }}>
-                            <label style={{ display: 'block', marginBottom: '12px', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--accents-5)', textAlign: 'center' }}>Structure</label>
-                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                                {['Technical', 'Strategic', 'Educational'].map(structure => (
-                                    <ContextKnob
-                                        key={structure}
-                                        label={structure}
-                                        active={activeStructure === structure}
-                                        onClick={() => setActiveStructure(structure)}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <div style={{ marginBottom: '40px' }}>
-                <button
-                    onClick={handleGenerate}
-                    disabled={isGenerating}
-                    className="geist-btn"
-                    style={{
-                        background: 'transparent',
-                        color: '#fff',
-                        border: '1px solid var(--accents-2)',
-                        width: '100%',
-                        height: '56px',
-                        fontSize: '1rem',
-                        letterSpacing: '0.1em',
-                        borderRadius: '999px',
-                        transition: 'all 0.2s',
-                        opacity: isGenerating ? 0.7 : 1,
-                        cursor: 'pointer',
-                        fontWeight: 400
-                    }}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
-                        e.currentTarget.style.borderColor = '#fff';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.borderColor = 'var(--accents-2)';
-                    }}
-                >
-                    {isGenerating ? 'CRYSTALLIZING...' : (strategy === 'presentation' ? 'OPEN PRESENTATION WIZARD' : `GENERATE ${strategy.toUpperCase()}`)}
-                </button>
-                {isGenerating && (
-                    <div style={{ marginTop: '16px', width: '100%', height: '4px', background: 'var(--accents-2)', borderRadius: '2px', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', background: '#fff', width: '50%', animation: 'progress 2s infinite ease-in-out' }} />
-                        <style jsx>{`
-                            @keyframes progress {
-                                0% { transform: translateX(-100%); }
-                                100% { transform: translateX(200%); }
-                            }
-                        `}</style>
-                    </div>
-                )}
-            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
-                {artifacts.length === 0 && !isGenerating && (
-                    <div style={{ padding: '32px', textAlign: 'center', color: 'var(--accents-5)', border: '1px dashed var(--accents-2)', borderRadius: '8px' }}>
-                        No project-level artifacts yet.
-                    </div>
-                )}
-                {artifacts.map((artifact) => (
-                    <div key={artifact.id} className="geist-card" style={{ padding: '24px', border: '1px solid var(--accents-2)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '16px', position: 'relative' }}>
-                        <div style={{ width: '40px', height: '40px', background: '#fff', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px' }}>
-                            <Package size={20} />
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{artifact.title}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--accents-5)' }}>
-                                {new Date(artifact.createdAt).toLocaleDateString()} • MARKDOWN
-                            </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                            <button
-                                onClick={() => handleShare(artifact)}
-                                title="Share / Copy for NotebookLM"
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accents-4)', padding: '8px' }}
-                            >
-                                <Share size={20} />
-                            </button>
-                            <button
-                                onClick={() => handleDownload(artifact)}
-                                title="Download Markdown"
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accents-4)', padding: '8px' }}
-                            >
-                                <Download size={20} />
-                            </button>
-                        </div>
-                    </div>
-                ))}
-            </div>
 
-            <PresentationGenerator
-                project={project}
-                visible={showPresentationModal}
-                onClose={() => setShowPresentationModal(false)}
-                audience={activeAudience}
-                structure={activeStructure}
-            />
-        </div>
-    )
-}
 
-function StrategyCard({ active, onClick, label, icon, comingSoon }: any) {
-    return (
-        <button
-            onClick={comingSoon ? undefined : onClick}
-            disabled={comingSoon}
-            style={{
-                background: active ? 'rgba(255,255,255,0.1)' : 'transparent',
-                color: active ? '#fff' : (comingSoon ? 'var(--accents-3)' : 'var(--accents-5)'),
-                border: 'none',
-                borderRadius: '999px',
-                padding: '8px 24px',
-                cursor: comingSoon ? 'not-allowed' : 'pointer',
-                textAlign: 'center',
-                transition: 'all 0.2s ease',
-                fontSize: '0.9rem',
-                letterSpacing: '0.05em',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                position: 'relative',
-                opacity: comingSoon ? 0.6 : 1
-            }}
-            onMouseEnter={(e) => {
-                if (!active && !comingSoon) e.currentTarget.style.color = '#fff';
-            }}
-            onMouseLeave={(e) => {
-                if (!active && !comingSoon) e.currentTarget.style.color = 'var(--accents-5)';
-            }}
-        >
-            {icon && <span>{icon}</span>}
-            {label}
-            {comingSoon && (
-                <span style={{
-                    fontSize: '0.6rem',
-                    background: 'var(--accents-2)',
-                    color: 'var(--accents-5)',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    marginLeft: '4px',
-                    fontWeight: 600,
-                    textTransform: 'uppercase'
-                }}>
-                    SOON
-                </span>
-            )}
-        </button>
-    )
-}
-
-function ContextKnob({ label, active, onClick }: { label: string, active?: boolean, onClick: () => void }) {
-    return (
-        <button
-            onClick={onClick}
-            style={{
-                background: active ? 'rgba(255,255,255,0.1)' : 'transparent',
-                border: 'none',
-                padding: '6px 16px',
-                borderRadius: '999px',
-                fontSize: '0.8rem',
-                color: active ? '#fff' : 'var(--accents-5)',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                letterSpacing: '0.05em'
-            }}
-            onMouseEnter={(e) => {
-                if (!active) e.currentTarget.style.color = '#fff';
-            }}
-            onMouseLeave={(e) => {
-                if (!active) e.currentTarget.style.color = 'var(--accents-5)';
-            }}
-        >
-            {label}
-        </button>
-    )
-}
-
-function safeParseAnalysis(content: string | object) {
-    if (typeof content === 'object' && content !== null) return content;
-    try {
-        const parsed = JSON.parse(content as string);
-        // Double parse check (if the DB stored it as a stringified string)
-        if (typeof parsed === 'string') {
-            try { return JSON.parse(parsed); } catch { return parsed; }
-        }
-        return parsed;
-    } catch {
-        return null;
-    }
-}
-
-function AnalysisViewer({ content }: { content: string | object }) {
-    const data = safeParseAnalysis(content);
-
-    if (!data || !data.objective) {
-        return <ReactMarkdown>{typeof content === 'string' ? content : JSON.stringify(content)}</ReactMarkdown>;
-    }
-
-    return (
-        <div>
-            {data.objective && (
-                <>
-                    {data.objective.concepts && (
-                        <div style={{ marginBottom: '24px' }}>
-                            <strong style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>Key Concepts</strong>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                                {data.objective.concepts.map((c: string, i: number) => (
-                                    <span key={i} style={{ background: 'var(--accents-1)', padding: '4px 12px', borderRadius: '16px', fontSize: '0.85rem' }}>{c}</span>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                    {data.objective.frameworks && (
-                        <div>
-                            <strong style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>Frameworks</strong>
-                            <ul style={{ paddingLeft: '20px', margin: 0 }}>
-                                {data.objective.frameworks.map((f: string, i: number) => (
-                                    <li key={i} style={{ marginBottom: '4px' }}>{f}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                    {data.objective.evidence && (
-                        <div style={{ marginTop: '24px' }}>
-                            <strong style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>Evidence</strong>
-                            <ul style={{ paddingLeft: '20px', margin: 0 }}>
-                                {data.objective.evidence.map((e: string, i: number) => (
-                                    <li key={i} style={{ marginBottom: '4px' }}>{e}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                </>
-            )}
-        </div>
-    )
-}
-
-function SubjectiveViewer({ content }: { content: string | object }) {
-    const data = safeParseAnalysis(content);
-    if (!data || !data.subjective) {
-        return <p style={{ color: 'var(--accents-5)' }}>No subjective analysis available.</p>;
-    }
-
-    const { observation, interpretation, application } = data.subjective;
-
-    return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {observation && (
-                <div>
-                    <strong style={{ display: 'block', marginBottom: '4px', fontSize: '0.85rem', color: 'var(--accents-5)' }}>OBSERVATION</strong>
-                    <p style={{ margin: 0 }}>{observation}</p>
-                </div>
-            )}
-            {interpretation && (
-                <div>
-                    <strong style={{ display: 'block', marginBottom: '4px', fontSize: '0.85rem', color: 'var(--accents-5)' }}>INTERPRETATION</strong>
-                    <p style={{ margin: 0 }}>{interpretation}</p>
-                </div>
-            )}
-            {application && (
-                <div>
-                    <strong style={{ display: 'block', marginBottom: '4px', fontSize: '0.85rem', color: 'var(--accents-5)' }}>APPLICATION</strong>
-                    <p style={{ margin: 0 }}>{application}</p>
-                </div>
-            )}
-        </div>
-    );
-}
-
-function formatObjectiveContent(content: string | object): string {
-    const data = safeParseAnalysis(content);
-    if (data && data.objective) {
-        let output = '';
-        if (data.objective.concepts) output += 'Key Concepts:\n' + data.objective.concepts.join(', ') + '\n\n';
-        if (data.objective.frameworks) output += 'Frameworks:\n' + data.objective.frameworks.map((f: string) => '- ' + f).join('\n') + '\n\n';
-        if (data.objective.evidence) output += 'Evidence:\n' + data.objective.evidence.map((f: string) => '- ' + f).join('\n');
-        return output.trim();
-    }
-    return typeof content === 'string' ? content : JSON.stringify(content);
-}
-
-function SkeletonScreen() {
-    return (
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '40px' }}>
-            <div className="geist-card" style={{ padding: '40px', height: '300px', background: '#111', animation: 'pulse 2s infinite ease-in-out', border: '1px solid var(--accents-2)', borderRadius: '8px' }}>
-                <div style={{ width: '30%', height: '20px', background: 'var(--accents-2)', marginBottom: '30px', borderRadius: '4px' }} />
-                <div style={{ width: '100%', height: '16px', background: 'var(--accents-2)', marginBottom: '12px', borderRadius: '4px' }} />
-                <div style={{ width: '90%', height: '16px', background: 'var(--accents-2)', marginBottom: '12px', borderRadius: '4px' }} />
-                <div style={{ width: '95%', height: '16px', background: 'var(--accents-2)', marginBottom: '12px', borderRadius: '4px' }} />
-            </div>
-            <div className="geist-card" style={{ padding: '40px', height: '200px', background: '#111', animation: 'pulse 2s infinite ease-in-out', animationDelay: '0.2s', border: '1px solid var(--accents-2)', borderRadius: '8px' }}>
-                <div style={{ width: '30%', height: '20px', background: 'var(--accents-2)', marginBottom: '30px', borderRadius: '4px' }} />
-                <div style={{ width: '100%', height: '16px', background: 'var(--accents-2)', marginBottom: '12px', borderRadius: '4px' }} />
-            </div>
-            <style jsx>{`
-                @keyframes pulse {
-                    0% { opacity: 0.6; }
-                    50% { opacity: 1; }
-                    100% { opacity: 0.6; }
-                }
-             `}</style>
-        </div>
-    )
-}
-
-function CopyButton({ text }: { text: string }) {
-    const [copied, setCopied] = useState(false);
-
-    const handleCopy = () => {
-        navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
-    return (
-        <button
-            onClick={handleCopy}
-            title="Copy to clipboard"
-            style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '4px',
-                color: copied ? '#000' : 'var(--accents-3)',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-            }}
-        >
-            {copied ? <Check size={16} /> : <Clipboard size={16} />}
-        </button>
-    )
-}
