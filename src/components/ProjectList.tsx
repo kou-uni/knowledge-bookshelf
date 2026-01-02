@@ -41,8 +41,7 @@ export function ProjectList({ projects }: { projects: Project[] }) {
                     </h2>
                     <button
                         onClick={() => setIsCreating(true)}
-                        className="geist-btn"
-                        style={{ height: '50px', fontSize: '1rem', border: '1px solid #555', background: '#222', padding: '0 30px' }}
+                        className="geist-btn new-book-btn"
                     >
                         + NEW BOOK
                     </button>
@@ -137,6 +136,14 @@ export function ProjectList({ projects }: { projects: Project[] }) {
         }
 
         /* HERO STYLES */
+        .new-book-btn {
+            height: 50px;
+            font-size: 1rem;
+            border: 1px solid #555;
+            background: #222;
+            padding: 0 30px;
+        }
+
         .hero-container {
             position: relative;
             height: 500px;
@@ -199,6 +206,11 @@ export function ProjectList({ projects }: { projects: Project[] }) {
             }
             .shelf-row > :global(*) {
                 scroll-snap-align: center;
+            }
+            .new-book-btn {
+                font-size: 0.8rem;
+                padding: 0 20px;
+                height: 40px;
             }
         }
         

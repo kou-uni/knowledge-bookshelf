@@ -88,8 +88,8 @@ export function ProjectStrategySection({ project }: { project: Project }) {
 
             {/* CONTEXT PARAMETERS (Always visible) */}
             <div style={{ marginBottom: '32px' }}>
-                <div className="geist-card" style={{ padding: '24px', background: 'var(--accents-1)', border: 'none', borderRadius: '8px' }}>
-                    <div style={{ display: 'flex', gap: '48px', alignItems: 'flex-start', flexWrap: 'nowrap' }}>
+                <div className="geist-card strategy-card">
+                    <div className="strategy-content">
                         <div style={{ flex: 1 }}>
                             <label style={{ display: 'block', marginBottom: '12px', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--accents-5)', textAlign: 'center' }}>Target Audience</label>
                             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -191,6 +191,28 @@ export function ProjectStrategySection({ project }: { project: Project }) {
                 audience={activeAudience}
                 structure={activeStructure}
             />
+            <style jsx>{`
+                .strategy-card {
+                    padding: 24px;
+                    background: var(--accents-1);
+                    border: none;
+                    border-radius: 8px;
+                }
+                .strategy-content {
+                    display: flex;
+                    gap: 48px;
+                    align-items: flex-start;
+                    flex-wrap: nowrap;
+                }
+                @media (max-width: 600px) {
+                    .strategy-card {
+                        padding: 16px;
+                    }
+                    .strategy-content {
+                        gap: 16px;
+                    }
+                }
+            `}</style>
         </div>
     )
 }
