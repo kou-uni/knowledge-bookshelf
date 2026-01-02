@@ -188,6 +188,12 @@ export function ProjectList({ projects }: { projects: Project[] }) {
 
         /* IPHONE 16 / MOBILE OPTIMIZATION */
         @media (max-width: 600px) {
+            .new-book-btn {
+                font-size: 0.8rem;
+                padding: 0 20px;
+                height: 40px;
+            }
+
             .hero-container {
                 height: 200px; /* Reduced to user preference */
             }
@@ -206,11 +212,6 @@ export function ProjectList({ projects }: { projects: Project[] }) {
             }
             .shelf-row > :global(*) {
                 scroll-snap-align: center;
-            }
-            .new-book-btn {
-                font-size: 0.8rem;
-                padding: 0 20px;
-                height: 40px;
             }
         }
         
